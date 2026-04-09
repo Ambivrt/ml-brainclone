@@ -99,6 +99,42 @@ Use gws CLI ALWAYS for mail/calendar/drive — never MCP plugins for these.
 
 ---
 
+
+## Windows Terminal Startup (Windows)
+
+Run each agent (Larry/Barry/Harry/Parry) in its own dedicated Windows Terminal window.
+
+```powershell
+# Start all agent windows (skips already-open ones)
+.\scripts\larry-startup.ps1
+
+# After manually positioning windows: save positions for next time
+.\scripts\larry-save-positions.ps1
+```
+
+Positions are saved to `scripts/window-positions.json` and applied automatically at next start.
+
+**Windows Terminal profile requirements** (`settings.json`):
+```json
+{
+    "name": "Larry",
+    "suppressApplicationTitle": true,
+    "tabTitle": "Larry",
+    "commandline": "powershell.exe -NoExit -Command \"larry\"",
+    "colorScheme": "Larry Cyan"
+}
+```
+
+`suppressApplicationTitle: true` prevents the shell from overriding the title set by `--title`.
+
+| Script | Function |
+|--------|---------|
+| `scripts/larry-startup.ps1` | Starts 4 WT windows with correct profile + saved position |
+| `scripts/larry-save-positions.ps1` | Saves positions using Win32 EnumWindows API |
+| `scripts/window-positions.json` | Saved X/Y/W/H per agent (auto-generated, gitignored) |
+
+---
+
 ## Playwright (MCP)
 
 Persistent browser profile: `{{VAULT_PATH}}/../playwright-profile`
@@ -145,6 +181,8 @@ Automated batch jobs via OS task scheduler:
 ```
 
 Runs with `claude --print --model haiku`. Writes ONLY to `00-inbox/`.
+
+**Step 0 (runs before all batches):** `mempalace mine` indexes new/changed vault files incrementally.
 
 ---
 
