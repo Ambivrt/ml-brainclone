@@ -12,7 +12,7 @@ MemPalace gives your AI second brain a **semantic, searchable memory layer**. In
 |------------|-------------------|----------------|
 | **Search** | Grep/Glob (exact text match) | Semantic search (meaning-based) |
 | **Context loading** | Manual file reads | Compressed wake-up summary (~600 tokens) |
-| **Memory size** | Limited by context window | 23,000+ indexed knowledge chunks |
+| **Memory size** | Limited by context window | 19,000+ indexed knowledge chunks |
 | **Cost** | — | Zero. Fully local, no API calls |
 | **Integration** | — | MCP server (19 tools) in Claude Code |
 
@@ -23,7 +23,7 @@ MemPalace gives your AI second brain a **semantic, searchable memory layer**. In
 ```
 Vault (markdown files)
     ↓
-mempalace mine     → chunks files, generates embeddings (MiniLM-L6-v2, ONNX)
+mempalace mine     → chunks files, generates embeddings (multilingual-e5-small, ONNX, CUDA GPU)
     ↓
 ChromaDB           → local vector database (SQLite-backed)
     ↓
@@ -277,6 +277,70 @@ MemPalace complements the existing memory system (file-based `MEMORY.md` index):
 | **mempalace wake-up** | Compressed vault context | AAAK Dialect |
 
 They work together: MEMORY.md for precise, curated knowledge; MemPalace for broad semantic search when you don't know which file has what you need.
+
+---
+
+## Multilingual Support (Swedish, etc.)
+
+The default model (MiniLM-L6-v2) only supports English. For non-English vaults, swap the embedding model:
+
+### Recommended: multilingual-e5-small
+
+```bash
+# Download ONNX model
+# Place in: D:/mempalace-models/multilingual-e5-small-onnx/
+#   - model.onnx (~470MB)
+#   - tokenizer.json (~17MB)
+#   - config.json, special_tokens_map.json, tokenizer_config.json
+
+# Set env variable (or patch embedding.py)
+set MEMPALACE_EMBEDDING_MODEL=D:/mempalace-models/multilingual-e5-small-onnx
+
+# Re-mine (delete old palace first — embeddings are incompatible)
+rmdir /s /q %USERPROFILE%\.mempalace\palace
+mempalace mine {{VAULT_PATH}}
+```
+
+### Tested models
+
+| Model | Size | Swedish | English | Notes |
+|-------|------|---------|---------|-------|
+| MiniLM-L6-v2 (default) | ~22MB | Unusable | Excellent | English-only |
+| paraphrase-multilingual-MiniLM-L12-v2 | ~471MB | Untested (OOM) | — | OOM on 32GB system |
+| **multilingual-e5-small** | ~470MB | **Excellent** (0.75-0.81) | Excellent (0.73) | Recommended |
+
+### MCP server with custom model
+
+In `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "mempalace": {
+      "command": "python",
+      "args": ["-m", "mempalace", "mcp"],
+      "env": {
+        "MEMPALACE_EMBEDDING_MODEL": "D:/mempalace-models/multilingual-e5-small-onnx"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Agent Integration
+
+All four agents in the Larry ecosystem are integrated with MemPalace:
+
+| Agent | Integration | How |
+|-------|-----------|-----|
+| **Larry** | MCP server (19 tools) + CLAUDE.md instructions | Semantic search before grep for open-ended queries |
+| **Barry** | Pre-generation search + post-generation indexing | `barry.py` searches for similar past prompts, indexes metadata after generation |
+| **Harry** | STT transcript indexing | `harry-stt.py` indexes voice notes in Milla after transcription |
+| **Parry** | Semantic privacy scanning | `parry.py scan` uses Milla to find private context in public files |
+
+All integrations are graceful — 10s timeout, silent fallback if Milla is unavailable.
 
 ---
 
