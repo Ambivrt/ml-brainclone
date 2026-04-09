@@ -231,9 +231,20 @@ gcloud auth application-default login
 
 ### 4.3 Parry (Privacy Gatekeeper)
 
-See [docs/privacy-architecture.md](docs/privacy-architecture.md).
+See [docs/parry-setup.md](docs/parry-setup.md) for full setup and command reference.
 
 No external dependencies — Python stdlib only.
+
+```bash
+# Install git pre-commit hook (run once)
+python 03-projects/parry/parry.py install-hooks
+
+# Auto-tag all untagged notes with privacy level
+python 03-projects/parry/parry.py tag --vault
+
+# Check status
+python 03-projects/parry/parry.py status
+```
 
 ---
 

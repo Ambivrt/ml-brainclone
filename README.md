@@ -21,7 +21,8 @@ larry-scaffold/
 │   ├── harry-setup.md            <- Harry (audio agent) setup
 │   ├── mempalace-setup.md        <- MemPalace (semantic memory) setup + GPU config
 │   ├── memory-system.md          <- Persistent memory architecture
-│   └── privacy-architecture.md   <- Privacy layers + gatekeeper agent
+│   ├── parry-setup.md            <- Parry (gatekeeper agent) setup + commands
+│   └── privacy-architecture.md   <- Privacy layers + auto-tagging + tone learning
 ├── templates/
 │   ├── daily.md                  <- Daily note template
 │   ├── project.md                <- Project template

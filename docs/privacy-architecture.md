@@ -94,13 +94,67 @@ Wikilinks from `_private/` to other `_private/` files are OK.
 | **strict** | Green | Everything reviewed. Good before client meetings. |
 
 ```bash
-parry off        # Turn off
-parry on         # Balanced (default)
-parry strict     # Strict mode
-parry status     # Show current mode
-parry scan <file> # Scan a file
-parry audit      # Scan entire vault
+# Mode
+parry off                                          # Turn off
+parry on                                           # Balanced (default)
+parry strict                                       # Strict mode
+parry status                                       # Show current mode + schedule
+
+# Scanning
+parry scan <file>                                  # Scan a file
+parry scan --staged                                # Scan git staged (exits 1 on violations)
+parry audit                                        # Scan entire vault
+
+# Auto-tagging
+parry tag <file>                                   # Auto-detect and apply privacy level
+parry tag --vault                                  # Tag all untagged .md files
+parry tag --vault --dry-run                        # Preview without writing
+
+# Pre-mail check
+parry check-mail --recipient <id> --content "text" # Gate check for email
+
+# Tone learning
+parry learn --recipient <id> --content "text"      # Store tone observation
+# (Flags deviations after 5+ observations per recipient)
+
+# Hook installation
+parry install-hooks                                # Install git pre-commit hook
 ```
+
+### Auto Privacy Tagging
+
+Parry can infer the right privacy level from file content:
+
+| Signal | Level |
+|--------|-------|
+| File in `_private/` | L3 |
+| API key detected | L3 |
+| NSFW keywords | L3 |
+| Health/finance/relationship keywords | L3 |
+| Work/client/professional keywords | L2 |
+| Default | L1 |
+
+```bash
+parry tag 03-projects/something.md    # Tag single file
+parry tag --vault --dry-run           # Preview entire vault
+parry tag --vault                     # Apply to all untagged files
+```
+
+Skips files that already have a `privacy:` field.
+
+### Adaptive Tone Learning
+
+Parry learns your communication style per recipient over time. Feed it your actual messages:
+
+```bash
+parry learn --recipient ana --content "Hej Ana, det är nåt jag måste berätta..."
+parry learn --recipient magnus-werner --content "Hej Magnus, angående CIO-mötet..."
+```
+
+After 5+ observations per recipient, Parry flags deviations in `check_tone` and `check-mail`:
+- Formality shift (> 3 points on a 0-10 scale)
+- Unusual message length (> 3× or < 20% of normal)
+- New greeting phrase
 
 ### Balanced Schedule
 
