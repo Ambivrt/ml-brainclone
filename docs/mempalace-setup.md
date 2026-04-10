@@ -282,50 +282,158 @@ They work together: MEMORY.md for precise, curated knowledge; MemPalace for broa
 
 ## Multilingual Support (Swedish, etc.)
 
-The default model (MiniLM-L6-v2) only supports English. For non-English vaults, swap the embedding model:
+The default model (MiniLM-L6-v2) only supports English. For non-English vaults, swap the embedding model.
 
-### Recommended: multilingual-e5-small
+### Recommended: multilingual-e5-large
+
+Higher quality than e5-small — 1024-dim embeddings, XLM-RoBERTa backbone.
 
 ```bash
 # Download ONNX model
-# Place in: D:/mempalace-models/multilingual-e5-small-onnx/
-#   - model.onnx (~470MB)
-#   - tokenizer.json (~17MB)
-#   - config.json, special_tokens_map.json, tokenizer_config.json
+# Place in: D:/mempalace-models/multilingual-e5-large-onnx/
+#   - model.onnx (~2.2GB)
+#   - tokenizer.json
 
-# Set env variable (or patch embedding.py)
-set MEMPALACE_EMBEDDING_MODEL=D:/mempalace-models/multilingual-e5-small-onnx
+# Set env variable (or patch embedding.py — see below)
+set MEMPALACE_EMBEDDING_MODEL=D:/mempalace-models/multilingual-e5-large-onnx
 
-# Re-mine (delete old palace first — embeddings are incompatible)
+# Re-mine after model change (embeddings are dimension-incompatible)
 rmdir /s /q %USERPROFILE%\.mempalace\palace
 mempalace mine {{VAULT_PATH}}
 ```
 
 ### Tested models
 
-| Model | Size | Swedish | English | Notes |
-|-------|------|---------|---------|-------|
-| MiniLM-L6-v2 (default) | ~22MB | Unusable | Excellent | English-only |
-| paraphrase-multilingual-MiniLM-L12-v2 | ~471MB | Untested (OOM) | — | OOM on 32GB system |
-| **multilingual-e5-small** | ~470MB | **Excellent** (0.75-0.81) | Excellent (0.73) | Recommended |
+| Model | Dim | Size | Swedish | English | Notes |
+|-------|-----|------|---------|---------|-------|
+| MiniLM-L6-v2 (default) | 384 | ~22MB | Unusable | Excellent | English-only |
+| multilingual-e5-small | 384 | ~470MB | Good (0.75-0.81) | Good | Lighter option |
+| **multilingual-e5-large** | **1024** | ~2.2GB | **Excellent** | **Excellent** | **Recommended** |
+
+### Required patch: embedding.py
+
+ChromaDB needs a custom embedding function to use e5-large. The default MCP server will produce 384-dim query embeddings (mismatch) without it.
+
+Create `embedding.py` in the mempalace package:
+
+```python
+import os, numpy as np
+import onnxruntime as ort
+from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
+
+MODEL_DIR = os.environ.get("MEMPALACE_EMBEDDING_MODEL",
+    "D:/mempalace-models/multilingual-e5-large-onnx")
+
+_session = None
+_tokenizer = None
+
+def _init():
+    global _session, _tokenizer
+    if _session is not None:
+        return
+    from tokenizers import Tokenizer
+    _tokenizer = Tokenizer.from_file(os.path.join(MODEL_DIR, "tokenizer.json"))
+    _tokenizer.enable_padding()
+    _tokenizer.enable_truncation(max_length=512)
+    sess_opts = ort.SessionOptions()
+    sess_opts.log_severity_level = 3
+    sess_opts.intra_op_num_threads = 4
+    _session = ort.InferenceSession(
+        os.path.join(MODEL_DIR, "model.onnx"),
+        sess_options=sess_opts,
+        providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+    )
+
+class E5SmallEmbeddingFunction(EmbeddingFunction[Documents]):
+    def __call__(self, input: Documents) -> Embeddings:
+        _init()
+        texts = [t if t.startswith(("query: ", "passage: ")) else f"passage: {t}"
+                 for t in input]
+        encoded = _tokenizer.encode_batch(texts)
+        input_ids = np.array([e.ids for e in encoded], dtype=np.int64)
+        attention_mask = np.array([e.attention_mask for e in encoded], dtype=np.int64)
+        input_names = {inp.name for inp in _session.get_inputs()}
+        feed = {"input_ids": input_ids, "attention_mask": attention_mask}
+        if "token_type_ids" in input_names:
+            feed["token_type_ids"] = np.zeros_like(input_ids)
+        outputs = _session.run(None, feed)
+        token_embeddings = outputs[0]
+        mask = attention_mask.astype(np.float32)
+        mask_exp = np.expand_dims(mask, -1)
+        pooled = np.sum(token_embeddings * mask_exp, axis=1) / np.clip(mask_exp.sum(axis=1), 1e-9, None)
+        norms = np.linalg.norm(pooled, axis=1, keepdims=True)
+        return (pooled / np.clip(norms, 1e-9, None)).tolist()
+
+_ef_instance = None
+
+def get_embedding_function():
+    global _ef_instance
+    if _ef_instance is None:
+        _ef_instance = E5SmallEmbeddingFunction()
+    return _ef_instance
+```
+
+Also patch `palace.py`, `searcher.py`, and `mcp_server.py` to call `get_embedding_function()` when opening collections.
+
+**Critical:** Apply patches to the venv running the MCP server, NOT just the system Python.
+
+### Privacy filtering (patch)
+
+Add `max_privacy` parameter to `search_memories()` in `searcher.py`:
+
+```python
+def search_memories(query, palace_path, wing=None, room=None,
+                    n_results=5, max_privacy=4):
+    # Build where filter
+    conditions = []
+    if wing: conditions.append({"wing": {"$eq": wing}})
+    if room: conditions.append({"room": {"$eq": room}})
+    if max_privacy < 4:
+        conditions.append({"privacy_level": {"$lte": max_privacy}})
+    where = {"$and": conditions} if len(conditions) > 1 else (conditions[0] if conditions else {})
+    ...
+```
+
+Expose in `tool_search()` and the MCP schema in `mcp_server.py`.
 
 ### MCP server with custom model
 
-In `.mcp.json`:
+In `.mcp.json` (SSE mode — requires external process):
 
 ```json
 {
   "mcpServers": {
     "mempalace": {
-      "command": "python",
-      "args": ["-m", "mempalace", "mcp"],
-      "env": {
-        "MEMPALACE_EMBEDDING_MODEL": "D:/mempalace-models/multilingual-e5-small-onnx"
-      }
+      "type": "sse",
+      "url": "http://127.0.0.1:3001/sse"
     }
   }
 }
 ```
+
+Run: `D:/venv-milla/Scripts/python.exe -m mempalace.mcp_server`
+
+---
+
+## Resource Monitoring (Sysmon)
+
+Monitor CPU, RAM, and GPU during mine runs:
+
+```bash
+# Install dependencies (in venv)
+pip install psutil pynvml
+
+# Run standalone
+python nattskift/milla-sysmon.py --duration 1200 --interval 10
+
+# Run alongside mine (background)
+python nattskift/milla-sysmon.py --duration 1200 &
+python -m mempalace mine {{VAULT_PATH}}
+```
+
+Output: `nattskift/logs/sysmon-YYYY-MM-DD-HHMM.json` with peak CPU/RAM/VRAM and time series.
+
+Reference: Marcus peaks at ~10.6GB RAM, 1.9GB VRAM idle. Full mine ~20 min on RTX 2080.
 
 ---
 
