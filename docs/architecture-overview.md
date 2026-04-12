@@ -146,13 +146,15 @@ Fallback on guardrail refusal: Venice (DeepSeek/Qwen, E2EE).
 
 ## Nightly Automation
 
+All batches run between 01:00–06:00 only.
+
 | Batch | Time | Model | Task |
 |-------|------|-------|------|
-| Batch 1 | 23:00 | Haiku | Vault hygiene (frontmatter, broken links, orphans) |
-| Batch 2 | 01:00 | Haiku | Inbox analysis (triage, connection suggestions, stale check) |
-| Batch 3 | 06:00 | Haiku | Morning brief (summary + vault stats) |
-| Batch 4 | 02:00 | Haiku | Reddit/community monitoring (L1-2 only) |
-| Batch 5 | 03:00 | Haiku | Knowledge distillation (inbox → knowledge/) |
+| Batch 1 | 01:00 | Haiku | Vault hygiene (frontmatter, broken links, orphans) |
+| Batch 2 | 02:00 | Haiku | Inbox analysis (triage, connection suggestions, stale check) |
+| Batch 3 | 03:00 | Haiku | Reddit/community monitoring (L1-2 only) |
+| Batch 4 | 04:00 | System | Milla mine — reindex vault (GPU-heavy, never run manually during active session) |
+| Batch 5 | 06:00 | Haiku | Morning brief (summary + vault stats + Reddit digest) |
 
 ---
 
@@ -165,3 +167,5 @@ Fallback on guardrail refusal: Venice (DeepSeek/Qwen, E2EE).
 5. **Robust over quick** — never a hack, always a reliable solution
 6. **Yolo mode** — Larry always runs with `--dangerously-skip-permissions`
 7. **Parry guards** — middleware filter on all output, three modes: off/balanced/strict
+
+See [Larry's Ten Commandments](ten-commandments.md) for the full operating principles.
