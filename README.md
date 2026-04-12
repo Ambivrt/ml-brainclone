@@ -9,7 +9,7 @@ Larry is an AI-powered personal knowledge system that combines an Obsidian vault
 ## What You Get
 
 ```
-larry-scaffold/
+ml-brainclone/
 ├── README.md                     <- You are here
 ├── ARCHITECTURE.md               <- System design, tri-modal architecture, freedom router
 ├── SETUP.md                      <- Step-by-step installation guide
