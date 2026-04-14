@@ -207,10 +207,14 @@ These logs are indexable by MemPalace and searchable in Obsidian.
 
 | Command | Action |
 |---------|--------|
-| `/status` | Show online status, queue count, voice on/off |
-| `/voice` | Toggle voice responses on/off (default: off) |
-| `/queue` | Show unread queue entries |
-| `/stop` | Stop the listener daemon |
+| `/status` | Online-status, uptime, restarts, queue, voice |
+| `/voice` | Toggla röst på/av (default: av) |
+| `/queue` | Visa antal olästa i queue |
+| `/clearqueue` | Rensa hela notify-queue.json |
+| `/uptime` | Uptime + starttid + restarts |
+| `/stop` | Stäng ner listener-processen |
+
+**OBS:** `/stop` stänger processen helt — omstart måste ske manuellt eller via Task Scheduler. Inget `/start`-kommando finns (ingen aktiv process att ta emot det).
 
 ---
 
@@ -240,6 +244,8 @@ python larry_bot_listener.py
 **Windows startup (recommended):** Add to Task Scheduler → trigger At logon → action: `pythonw larry_bot_listener.py` (no console window).
 
 **Important:** Only ONE listener instance at a time. Multiple instances cause `409 Conflict` errors from the Telegram API. Kill existing processes before restarting.
+
+**Startup flush:** On every start, the listener calls `getUpdates` once with `offset=-1` to drain any stale messages (e.g. old `/stop` commands sitting in the Telegram queue). This prevents the daemon from immediately shutting down after a restart.
 
 ### 5. Dependencies
 ```bash
