@@ -235,6 +235,43 @@ See [docs/obsidian-bases.md](docs/obsidian-bases.md) for full syntax reference.
 
 ---
 
+## PWA Layer (Planned)
+
+The system is evolving toward a unified PWA that serves as the primary interface for all three modes. The Telegram bot, currently a standalone daemon, will become a thin adapter on top of an interface-agnostic brain class.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ PWA                                                     │
+│                                                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
+│  │ Text-vy  │  │ Image-vy │  │ Audio-vy │  (frontend)  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘              │
+│       │              │              │                    │
+│  ┌────┴──────────────┴──────────────┴────┐              │
+│  │            API layer                  │              │
+│  └────┬──────────────┬──────────────┬────┘              │
+│       │              │              │                    │
+│  ┌────┴─────┐  ┌─────┴────┐  ┌─────┴────┐              │
+│  │  Brain   │  │  Image   │  │  Audio   │  (backends)  │
+│  └────┬─────┘  └──────────┘  └──────────┘              │
+│       │                                                 │
+│  ┌────┴─────────────────────────────────┐              │
+│  │ Interface adapters:                  │              │
+│  │  • PWA chat (websocket)              │              │
+│  │  • Telegram bot (long-poll)          │              │
+│  │  • CLI (Claude Code — existing)      │              │
+│  └──────────────────────────────────────┘              │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Key principle:** The Brain is interface-agnostic. It uses Anthropic SDK directly (not `claude -p` subprocess), with semantic memory injected per message, full personality prompts, and prompt caching for cost control.
+
+See [architecture/telegram-v2-spec.md](architecture/telegram-v2-spec.md) for the full technical spec.
+
+**Status:** Design phase — parked until architectural decisions are made.
+
+---
+
 ## Design Principles
 
 1. **Primary model first, always.** Best available model. Fallback only on refusal.

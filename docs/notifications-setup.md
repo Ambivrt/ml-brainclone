@@ -25,8 +25,10 @@ Larry / Barry / Harry / Parry
          ├─► _private/telegram-chat-history.json  (rolling context)
          ├─► Gemini 2.5 Flash (vision / STT)
          ├─► Gemini TTS (voice responses)
-         └─► claude -p (text responses)
+         └─► Anthropic SDK (text responses — see v2 spec below)
 ```
+
+> **v2 Migration (planned):** The listener is being rebuilt with Anthropic SDK directly, replacing the `claude -p` subprocess approach. The brain becomes interface-agnostic (`LarryBrain` class) shared between Telegram, a PWA chat interface, and potentially CLI. See [architecture/telegram-v2-spec.md](../architecture/telegram-v2-spec.md).
 
 ---
 
