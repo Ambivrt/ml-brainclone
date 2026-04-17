@@ -22,6 +22,7 @@ ml-brainclone/
 │   ├── mempalace-setup.md        <- MemPalace (semantic memory) setup + GPU config
 │   ├── memory-system.md          <- Persistent memory architecture
 │   ├── parry-setup.md            <- Parry (gatekeeper agent) setup + commands
+│   ├── brains-bus-setup.md       <- SQLite event bus between agents, guarded by Parry
 │   └── privacy-architecture.md   <- Privacy layers + auto-tagging + tone learning
 ├── templates/
 │   ├── daily.md                  <- Daily note template

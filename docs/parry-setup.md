@@ -17,6 +17,7 @@ Parry is Larry's fourth agent. Not a modality (image/audio/text) but a **filter 
 | Tone & Voice | Checks channel-appropriate tone, learns your style per recipient |
 | Quality Gate | ÅÄÖ, trailing whitespace, API key detection |
 | Auto-tagging | Infers and writes `privacy:` frontmatter on untagged notes |
+| Bus Guardian | Verdicts every inter-agent event before delivery — see [brains-bus-setup.md](brains-bus-setup.md) |
 
 ---
 
