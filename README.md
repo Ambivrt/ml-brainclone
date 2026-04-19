@@ -32,6 +32,9 @@ ml-brainclone/
 ├── scripts/
 │   ├── load-context.sh               <- Session init hook (reads active context)
 │   ├── collect-vault-data.sh         <- Nightly vault data collection
+│   ├── harry_logger.py               <- Shared transcript-logger for Harry agents
+│   ├── barry_audit.py                <- Unified JSONL audit-log for Barry events
+│   ├── gws_mailer.py                 <- Outgoing-mail helper with local archiving
 │   ├── parry-scheduled-task.xml      <- Windows Task Scheduler template for Parry autostart
 │   └── register-parry-task.ps1       <- One-shot registration script (run once at setup)
 ├── .gitignore                    <- Template .gitignore for your vault
@@ -135,6 +138,7 @@ Throughout all files, replace these with your own values:
 | [docs/mempalace-setup.md](docs/mempalace-setup.md) | MemPalace semantic memory + GPU acceleration |
 | [docs/memory-system.md](docs/memory-system.md) | How persistent memory works |
 | [docs/privacy-architecture.md](docs/privacy-architecture.md) | Privacy layers and enforcement |
+| [docs/logging-architecture.md](docs/logging-architecture.md) | Save-everything rule: transcript, audit, mail, event-bus |
 
 ---
 
