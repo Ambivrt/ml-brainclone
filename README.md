@@ -23,6 +23,7 @@ ml-brainclone/
 │   ├── memory-system.md          <- Persistent memory architecture
 │   ├── parry-setup.md            <- Parry (gatekeeper agent) setup + commands
 │   ├── brains-bus-setup.md       <- SQLite event bus between agents, guarded by Parry
+│   ├── task-dispatch.md          <- Inter-agent work queue: dispatch from any channel
 │   └── privacy-architecture.md   <- Privacy layers + auto-tagging + tone learning
 ├── templates/
 │   ├── daily.md                  <- Daily note template
@@ -139,6 +140,7 @@ Throughout all files, replace these with your own values:
 | [docs/memory-system.md](docs/memory-system.md) | How persistent memory works |
 | [docs/privacy-architecture.md](docs/privacy-architecture.md) | Privacy layers and enforcement |
 | [docs/logging-architecture.md](docs/logging-architecture.md) | Save-everything rule: transcript, audit, mail, event-bus |
+| [docs/task-dispatch.md](docs/task-dispatch.md) | Inter-agent work queue: dispatch tasks from any channel (Telegram, mail, CLI) |
 
 ---
 
