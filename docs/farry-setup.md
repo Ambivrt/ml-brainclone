@@ -109,13 +109,41 @@ Farry reads these files when translating in the relevant domain to preserve your
 
 | Mode | Trigger | Example |
 |------|---------|---------|
-| Auto-detect | `/f <text>` | Detects source + target automatically |
+| `babel` | `/f <text>` | Detects source + target automatically |
 | Explicit target | `/f <lang> <text>` | `/f svenska Here is the report` |
-| Explain (machine→human) | `/f explain <text>` | Parses JSON, logs, stack traces |
-| Code convert | `/f <target-lang> <code>` | `/f javascript def greet(): ...` |
+| `explain` | `/f explain <text>` | Translate with cultural nuance |
+| `learn` | `/f learn <text>` | Pedagogical mode: pronunciation, context, example |
+| `code_to_human` | Auto-detected from code markers | Explains code for non-technical readers (max 3 sentences) |
+| `human_to_code` | "Write code that..." | Description → code generation |
+| `error_to_human` | Auto-detected from error markers | Explains error messages in plain language |
 | Agent bridge | Internal Larry call | Translates between agent message schemas |
 
+Mode is auto-detected from input content. Code markers (`def`, `class`, `import`, `{`, `=>`) trigger `code_to_human`. Error markers (`Traceback`, `Error:`, `FAILED`) trigger `error_to_human`. Otherwise `babel` (standard translation).
+
 For ambiguous input, Farry asks a single clarifying question before proceeding.
+
+---
+
+## Conversation Context (Fas 2)
+
+Farry maintains a rolling conversation history (last 20 translations) for context continuity. When translating a follow-up message, previous translations are included in the prompt so the model can maintain consistent terminology and understand conversational flow.
+
+Additionally, before translating, Farry queries the semantic memory system for relevant prior translations and vault content, ensuring consistency with established vocabulary.
+
+```
+Forward message arrives
+    │
+    ├── Search glossary (ordbok) for known phrases
+    ├── Query semantic memory for related context
+    ├── Build prompt with conversation history (last 5)
+    │
+    ▼
+Translation with full context
+    │
+    ├── Log to phrase book
+    ├── Add to conversation history
+    └── Return to user
+```
 
 ---
 

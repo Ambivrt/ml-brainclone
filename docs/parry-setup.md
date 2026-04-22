@@ -189,8 +189,74 @@ Both are in `03-projects/parry/`. Add to `.gitignore` if the vault is public.
 
 ---
 
+## YAML Rule Engine (Bus Guardian)
+
+When running as a bus daemon, Parry evaluates events against rules defined in a YAML file. Rules are hot-reloaded — edit the file and Parry picks up changes within one poll cycle.
+
+```yaml
+# parry-rules.yaml — example
+rules:
+  - name: privacy_to_external
+    description: Block L3/L4 content sent to external channels
+    action: block
+    conditions:
+      - kind_matches: "email-*"
+      - payload_contains: "privacy: 3"
+
+  - name: destructive_git
+    description: Flag force pushes and hard resets
+    action: flag
+    conditions:
+      - kind_matches: "git-*"
+      - payload_contains: "--force"
+
+  - name: email_external
+    description: Flag outbound emails to non-self addresses
+    action: flag
+    conditions:
+      - kind_matches: "email-send"
+      - payload_not_contains: "your@email.com"
+```
+
+### Condition types
+
+| Type | Matches |
+|------|---------|
+| `kind_matches` | Event kind (glob pattern via fnmatch) |
+| `payload_contains` | Substring anywhere in payload JSON |
+| `payload_not_contains` | Substring NOT in payload |
+| `payload_field_contains` | Specific field has specific value |
+| `from_brain` | Source agent name |
+
+### Actions
+
+| Action | Effect |
+|--------|--------|
+| `block` | Event silently dropped, logged |
+| `flag` | Event passes but flagged for review |
+| `log` | Event passes, extra logging |
+
+If the YAML file is missing or `pyyaml` is not installed, Parry falls back to hardcoded Python rules.
+
+Place the file alongside `parry_guardian.py` (e.g., `bus/parry-rules.yaml`).
+
+---
+
+## Event Archiving
+
+Old bus events are archived to a separate SQLite database to keep the main bus lean:
+
+```bash
+python brains-bus.py archive --days 30    # move events older than 30 days
+```
+
+The daemon does this automatically once per hour. Archive database: `_private/brains-bus-archive.db`.
+
+---
+
 ## See Also
 
 - [privacy-architecture.md](privacy-architecture.md) — Privacy model Parry enforces
+- [brains-bus-setup.md](brains-bus-setup.md) — Bus architecture and setup
 - [larry-setup.md](larry-setup.md) — Larry configuration
 - [architecture-overview.md](architecture-overview.md) — System overview

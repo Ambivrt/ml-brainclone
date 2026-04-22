@@ -210,6 +210,39 @@ pip install sounddevice numpy keyboard google-genai
 - `google-genai` — Gemini API (TTS, STT, Live)
 - `ffmpeg` — audio conversion/mixing (system install)
 
+## Subprocess Isolation (Telegram Voice)
+
+When handling voice messages via Telegram, the transcription pipeline runs in an isolated `multiprocessing.Process` to prevent crashes from taking down the listener:
+
+```
+Listener (parent)
+  │
+  ├── Download audio file
+  ├── Spawn worker process ──► _voice_pipeline_worker()
+  │     ├── Gemini STT (with retry)
+  │     ├── Whisper fallback (if Gemini fails)
+  │     └── Create vault note
+  │     └── Return results via Queue
+  ├── Wait (60s timeout)
+  │     └── On timeout: worker.kill() + error message
+  ├── Send reply, TTS, queue update (parent-only)
+  └── Log memory delta (tracemalloc)
+```
+
+### Whisper Fallback
+
+If Gemini STT fails all retries, the worker attempts local transcription via `faster-whisper` (GPU-accelerated):
+
+```python
+# Uses faster-whisper with CUDA
+# Model: medium, language: forced to your locale
+# Result tagged "whisper-fallback" for traceability
+```
+
+Install: `pip install faster-whisper`
+
+---
+
 ## Status
 
 - [x] Gemini TTS (harry-tts.py) — live
@@ -217,6 +250,9 @@ pip install sounddevice numpy keyboard google-genai
 - [x] Gemini Realtime Voice (harry-live.py) — live (Swedish via system instruction)
 - [x] Venice music/SFX — available via Playwright
 - [x] FFmpeg mixing — live
+- [x] Subprocess isolation — voice pipeline in separate process
+- [x] Whisper fallback — local GPU fallback when Gemini fails
+- [x] Memory profiling — tracemalloc before/after voice processing
 - [ ] Larry skills (/listen, /talk) — planned
 - [ ] Mood pattern analysis (night shift) — planned
 - [ ] Automatic Suno integration — planned

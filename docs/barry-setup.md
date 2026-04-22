@@ -165,3 +165,21 @@ Excludes: `.trash/`, `*.tmp`
 NSFW images: privacy 3-4. Image files never in vault or on GitHub. Metadata notes (visual-index/) sync via Git but contain no image files.
 
 NEVER link NSFW visual-index notes from public (L1-2) nodes.
+
+---
+
+## Prompt Dedup
+
+Barry includes a prompt-hash deduplication system (`scripts/barry_dedup.py`) that prevents re-generating identical or near-identical prompts.
+
+```bash
+# Build cache from audit log
+python barry_dedup.py --build
+
+# Check a prompt
+python barry_dedup.py "a fluffy cat on a sofa"
+```
+
+When integrated into the generation pipeline, Barry checks the cache before generating and prompts for confirmation if a similar prompt was used within the last 30 days. After successful generation, the prompt is registered automatically.
+
+The cache uses SHA-256 of a normalised prompt (lowered, whitespace-collapsed, stop-words stripped) stored in `_private/image-prompt-hashes.json`.
