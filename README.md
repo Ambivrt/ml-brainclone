@@ -28,7 +28,9 @@ ml-brainclone/
 │   ├── task-dispatch.md          <- Inter-agent work queue: dispatch from any channel
 │   ├── proactivity.md            <- Larry acts, doesn't just report: scanner + dispatcher + nightly triggers
 │   ├── privacy-architecture.md   <- Privacy layers + auto-tagging + tone learning
-│   └── eval-smoketest.md         <- Regression-check pattern for model swaps + CLAUDE.md edits
+│   ├── eval-smoketest.md         <- Regression-check pattern for model swaps + CLAUDE.md edits
+│   ├── skills-system.md          <- Skills: discovery, frontmatter format, self-patch
+│   └── vault-ingest.md           <- Document conversion tool (MarkItDown)
 ├── templates/
 │   ├── daily.md                  <- Daily note template
 │   ├── project.md                <- Project template
@@ -43,6 +45,7 @@ ml-brainclone/
 │   ├── harry_logger.py               <- Shared transcript-logger for Harry agents
 │   ├── barry_audit.py                <- Unified JSONL audit-log for Barry events
 │   ├── gws_mailer.py                 <- Outgoing-mail helper with local archiving
+│   ├── vault-ingest.py               <- Convert documents (PDF/DOCX/PPTX/XLSX) to vault Markdown
 │   ├── parry-scheduled-task.xml      <- Windows Task Scheduler template for Parry autostart
 │   └── register-parry-task.ps1       <- One-shot registration script (run once at setup)
 ├── architecture/
@@ -60,16 +63,28 @@ ml-brainclone/
 
 ## The Agent Ecosystem
 
+### Modalities (senses)
+
 | Agent | Modality | What it does | Technology |
 |-------|----------|-------------|------------|
 | **Larry** | Text | Orchestrator. Thinks, writes, codes, plans, remembers. | Claude Code (Opus/Sonnet) |
 | **Barry** | Image | Generates images, sorts visual material, maintains visual index. | Venice Chat via Playwright |
 | **Harry** | Audio | Text-to-speech, music, sound effects, mixing. | Gemini TTS (Vertex AI) + FFmpeg |
-| **Parry** | Filter | Privacy enforcement, tone control, quality gating. | Python daemon (parry_service.py) |
-| **Tarry** | Time / Scheduling | Reminders, follow-ups, recurring tasks, interrupted session recovery. | Python daemon (tarry_service.py) |
-| **Farry** | Understanding / Translation | All languages, human and machine. Real-time translation, machine→human explanation, code↔code, agent↔agent bridge. | Larry skill (inline) |
 
-Larry orchestrates everything. Barry and Harry are invoked by Larry when needed. Parry and Tarry run as background daemons. Farry is a skill built into Larry — no separate process.
+### Services (organs)
+
+| Agent | Function | What it does | Technology |
+|-------|----------|-------------|------------|
+| **Milla** | Memory | Semantic search, knowledge graph, diary, palace traversal. Never forgets. | MemPalace MCP (ChromaDB, GPU) |
+| **Bert** | Emotion | Sentiment scoring, mood tracking, trend detection. Measures, never interprets. | XLM-RoBERTa (local GPU) |
+| **Parry** | Judgment | Privacy enforcement, tone control, quality gating. | Python daemon (parry_service.py) |
+| **Tarry** | Time | Reminders, follow-ups, recurring tasks, interrupted session recovery. | Python daemon (tarry_service.py) |
+| **Carry** | Logistics | Transport content in/out/between systems. Pipelines with retry. | Python daemon (carry_service.py) |
+| **Darry** | Sleep | Night shift 2.0: Light/Deep/REM sleep phases. Adaptive nightly processing. | Python daemon (darry_service.py) |
+| **Scarry** | Conscience | Retroactive scanner. Finds procrastinated and forgotten tasks. Asks, never instructs. | Python script (scheduled) |
+| **Farry** | Language | All languages, human and machine. Translation, explanation, code↔code. | Larry skill (inline) |
+
+Larry orchestrates everything. Barry and Harry are invoked by Larry when needed. Daemons (Parry, Tarry, Carry, Darry) run in the background. Scarry runs on schedule via Darry. Farry and Bert are invoked on demand.
 
 ---
 

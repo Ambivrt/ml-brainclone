@@ -139,6 +139,108 @@ Active skill domains: brand-thinking, business-law, seo-sem, business-planning, 
 
 ---
 
+## Tarry — Clocks (Time & Proactivity)
+
+**Modality:** Time — reminders, deadlines, follow-ups, recurring tasks
+**System:** Python daemon (`tarry_service.py`)
+
+### Capabilities
+| Capability | Tool / Method | Notes |
+|------------|---------------|-------|
+| Reminders / deadlines | tarry-queue.json + bus | Telegram + session-init |
+| Follow-ups (check after N days) | Gmail / Telegram scan | Auto-escalation |
+| Recurring tasks | Cron expressions | Dynamically created |
+| Session continuity | Interrupted-tracking | "You were interrupted doing X" |
+| Proactive triggers | Calendar + deadline-approach | T-3, T-1, T-0 |
+
+---
+
+## Carry — Carries (Logistics & Transport)
+
+**Modality:** Transport — inbound, outbound, internal logistics
+**System:** Python daemon (`carry_service.py`)
+
+### Capabilities
+| Capability | Tool / Method | Notes |
+|------------|---------------|-------|
+| Inbound (external → system) | API / scrape / RSS → vault | Gmail attachments, Telegram media |
+| Outbound (system → external) | Playwright / GWS → channels | LinkedIn, IG, X, email |
+| Internal logistics | Filesystem operations | Inbox triage, image sorting, NAS sync |
+| Pipeline chains | Chained steps with retry | Generate → QA → upscale → sort → backup |
+| Approval gate | Bus → user → approve | All external requires OK |
+| Retry with backoff | 3 attempts, escalation | Robust transport |
+
+---
+
+## Darry — Dreams (Night Shift 2.0)
+
+**Modality:** Nightly processing — three sleep phases
+**System:** Python daemon (`darry_service.py`)
+
+### Capabilities
+| Capability | Model | Phase |
+|------------|-------|-------|
+| Light Sleep — quick maintenance | Haiku | Every night |
+| Deep Sleep — heavy processing | Sonnet + GPU | Adaptive (conditions-based) |
+| REM Sleep — creative analysis | Opus | 1-2x/week |
+| Morning brief 2.0 | Summarizes all phases | After sleep |
+| Adaptive scheduling | Conditions-based | Skip phases with nothing to do |
+
+---
+
+## Scarry — Scans (Retroactive Procrastination Scanner)
+
+**Modality:** Backward-looking analysis — finds forgotten and procrastinated tasks
+**System:** Python script (`scarry_scanner.py`)
+
+### Capabilities
+| Capability | Tool / Method | Notes |
+|------------|---------------|-------|
+| Health scan | KG + vault grep | Unbooked appointments, symptom patterns |
+| Finance scan | KG + vault grep | Unpaid bills, tax items |
+| Relationship scan | KG + diary | Broken promises, silence |
+| Project scan | Git log + vault | Dead projects, passed deadlines |
+| Admin scan | KG + vault | Contracts, insurance, renewals |
+| False-positive filter | Tarry cross-check | Avoids duplication |
+| Question formulation | Sonnet | Nudge, never instruct |
+
+---
+
+## Farry — Understands (Universal Interpreter)
+
+**Modality:** Language — human, machine, code, agent bridge
+**System:** Larry skill (not a daemon)
+
+### Capabilities
+| Capability | Tool / Method | Notes |
+|------------|---------------|-------|
+| Human languages | Claude native | All languages |
+| Machine → human | Claude native | Error codes, legal, medical |
+| Human → machine | Claude native | Natural language → CLI/API |
+| Code ↔ code | Claude native | Python ↔ JS, Bash ↔ PowerShell |
+| Agent ↔ agent | Semantic bridge | Cross-modal translation |
+
+---
+
+## Bert — Feels (Emotional Sensor)
+
+**Modality:** Sentiment — measures emotional temperature, trends, inflection points
+**System:** Python module (`bert_service.py`) — lazy-load, local GPU inference
+
+### Capabilities
+| Capability | Tool / Method | Notes |
+|------------|---------------|-------|
+| Score single message | `bert.score(text)` → -1.0 → +1.0 | ~500 msg/min on GPU |
+| Batch analysis | `bert.batch(messages)` | Per-person sentiment + dynamics |
+| Conversation analysis | `bert.analyze_conversation(archive)` | Trend line, inflection points |
+| Daily mood snapshot | Night shift / Darry | Appends to mood log |
+| Sustained negative alert | Auto-trigger → Tarry | >3 messages below -0.5 |
+
+**Model:** `cardiffnlp/twitter-xlm-roberta-base-sentiment` (multilingual, ~1.1 GB VRAM)
+**Rule:** Bert measures, never interprets. Numbers and trends — the user owns the insight.
+
+---
+
 ## Ecosystem Flow
 
 ```
@@ -146,11 +248,25 @@ User
   |
   v
 Larry (orchestrator)
-  |-- Milla (memory + search)
-  |-- Barry (image) --> Venice via Playwright
-  |-- Harry (audio) --> Gemini TTS/STT/Live + Venice music/SFX
-  |-- Parry (gatekeeper) --> privacy + tone
-  +-- GWS (communication) --> Gmail + Calendar + Drive
+  |
+  |-- MODALITIES
+  |   |-- Barry (image) --> Venice via Playwright
+  |   +-- Harry (audio) --> Gemini TTS/STT/Live + Venice music/SFX
+  |
+  |-- SERVICES
+  |   |-- Milla (memory) --> MemPalace MCP, KG, diary, semantic search
+  |   |-- Bert (emotion) --> XLM-RoBERTa sentiment, mood tracking
+  |   |-- Parry (judgment) --> privacy + tone, gatekeeper
+  |   |-- Tarry (time) --> reminders, deadlines, proactivity
+  |   |-- Carry (logistics) --> transport in/out/internal
+  |   |-- Darry (sleep) --> night shift Light/Deep/REM
+  |   |-- Scarry (conscience) --> retroactive procrastination scanner
+  |   +-- Farry (language) --> universal interpreter
+  |
+  +-- INFRASTRUCTURE
+      |-- Brains-bus (nervous system) --> SQLite WAL, event routing
+      |-- GWS (voice outward) --> Gmail + Calendar + Drive
+      +-- Playwright (hands) --> persistent Edge profile
 ```
 
 ---

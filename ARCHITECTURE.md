@@ -29,19 +29,32 @@ Your primary machine runs Claude Code directly in the vault. Additional machines
 
 ---
 
-## Tri-Modal Architecture
+## Agent Architecture
 
-Three modes. One brain. Specialized per modality.
+One orchestrator. Two senses. Eight organs. Three bones.
 
-| Mode | Modality | Role |
-|------|----------|------|
-| **Text** | Text | Orchestrator. Thinks, writes, codes, plans, remembers. The main brain. |
-| **Image** | Vision | Sees, creates, remembers visually. Input (camera/analysis) and output (generation). |
-| **Audio** | Sound | Hears, speaks, creates music/audio. Voice in, voice out, TTS, transcription, composition. |
-| **Time** | Scheduling | Tracks time obligations. Reminders, follow-ups, recurring tasks, interrupted sessions. Daemon. |
-| **Translation** | Understanding | Bridges all languages and formats. Human languages, machine protocols, code↔code. Larry skill. |
+### Modalities (senses)
 
-All modes handle all four privacy levels. All have access to the freedom router.
+| Mode | Role |
+|------|------|
+| **Text (Larry)** | Orchestrator. Thinks, writes, codes, plans, remembers. The main brain. |
+| **Image (Barry)** | Sees, creates, remembers visually. Input (camera/analysis) and output (generation). |
+| **Audio (Harry)** | Hears, speaks, creates music/audio. Voice in, voice out, TTS, transcription, composition. |
+
+### Services (organs)
+
+| Service | Role |
+|---------|------|
+| **Memory (Milla)** | Semantic search, knowledge graph, diary, palace traversal. Never forgets. |
+| **Emotion (Bert)** | Sentiment scoring, mood tracking, trend detection. Measures, never interprets. |
+| **Judgment (Parry)** | Privacy enforcement, tone control, quality gating. Flags, never blocks. |
+| **Time (Tarry)** | Reminders, follow-ups, recurring tasks. The agent that lingers. |
+| **Logistics (Carry)** | Transport content in/out/between systems. Pipelines with retry and approval gates. |
+| **Sleep (Darry)** | Night shift 2.0: Light Sleep (quick hygiene), Deep Sleep (heavy processing), REM Sleep (creative insight). |
+| **Conscience (Scarry)** | Retroactive scanner. Finds what you mentioned but never did. Asks, never instructs. |
+| **Language (Farry)** | All languages, human and machine. Translation, explanation, code↔code, agent↔agent bridge. |
+
+All agents handle all four privacy levels. All have access to the freedom router.
 
 ### Orchestration Model
 
@@ -299,14 +312,42 @@ See [architecture/telegram-v2-spec.md](architecture/telegram-v2-spec.md) for the
 
 | Agent | Role | Invoked by | Invokes | Process type |
 |-------|------|-----------|---------|--------------|
-| **Larry** | Orchestrator | User / Telegram / mail / CLI | Barry, Harry, Tarry, Farry | Claude Code session |
+| **Larry** | Orchestrator | User / Telegram / mail / CLI | All agents | Claude Code session |
 | **Barry** | Image generation | Larry | Venice (Playwright) | On-demand subprocess |
 | **Harry** | Audio / TTS | Larry | Vertex AI / Whisper | On-demand subprocess |
+| **Milla** | Semantic memory | All agents (via MCP) | ChromaDB | Persistent HTTP/SSE server |
+| **Bert** | Sentiment analysis | Larry / Telegram listener | XLM-RoBERTa (GPU) | On-demand (lazy-load) |
 | **Parry** | Privacy gatekeeper | Always-on middleware | Larry (flags) | Background daemon |
 | **Tarry** | Time / scheduling | Larry (queue write) | Larry (fires reminders) | Background daemon |
-| **Farry** | Translation / interpretation | Larry (skill call) | — (inline) | Larry skill, no process |
+| **Carry** | Content logistics | Larry / Darry / events | Filesystem, APIs, Playwright | Background daemon |
+| **Darry** | Night processing | Scheduled (nightly) | Larry, Milla, Carry, Scarry | Background daemon |
+| **Scarry** | Procrastination scan | Darry / Larry (on-demand) | Milla, vault | Scheduled script |
+| **Farry** | Translation | Larry (skill call) | — (inline) | Larry skill, no process |
 
 All inter-agent communication flows through the brains-bus (SQLite). Parry sees all bus events as gatekeeper before they reach their destination.
+
+---
+
+## Skills System
+
+Skills are markdown files the agent discovers and loads on-demand. Progressive disclosure: the index is cheap (list + triggers), skill files are expensive (full context). Read index first, skill only if triggers match.
+
+```
+1. User gives agent a task
+2. Agent reads CLAUDE.md (auto)
+3. If task matches potential skill → Read skills/INDEX.md
+4. INDEX lists skill with trigger + path
+5. Agent inspects skill frontmatter (Read with limit=20)
+6. If match → Read full skill
+```
+
+### Built-in Skills
+
+| Skill | What it does | Script |
+|-------|-------------|--------|
+| `vault-ingest` | Convert documents (PDF/DOCX/PPTX/XLSX/HTML/MSG) to vault Markdown | `scripts/vault-ingest.py` |
+
+See [docs/skills-system.md](docs/skills-system.md) for how to create your own skills, and [docs/vault-ingest.md](docs/vault-ingest.md) for the ingest tool.
 
 ---
 
