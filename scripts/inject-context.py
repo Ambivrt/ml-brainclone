@@ -35,7 +35,7 @@ def _load_state():
 
 
 def _save_state(state):
-    STATE_FILE.write_text(json.dumps(state), encoding="utf-8")
+    STATE_FILE.write_text(json.dumps(state, sort_keys=True), encoding="utf-8")
 
 
 def _get_bus_events(since_id):

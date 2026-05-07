@@ -91,7 +91,7 @@ def _heartbeat(path: Path, state: str = "idle"):
             "pid": os.getpid(), "brain": BRAIN,
             "ts": datetime.now().isoformat(timespec="seconds"),
             "state": state,
-        }, indent=2), encoding="utf-8")
+        }, indent=2, sort_keys=True), encoding="utf-8")
     except Exception:
         pass
 

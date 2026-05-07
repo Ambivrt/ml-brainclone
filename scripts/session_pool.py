@@ -47,7 +47,7 @@ def _load(agent: str) -> dict:
 
 
 def _save(agent: str, data: dict):
-    _state_path(agent).write_text(json.dumps(data), encoding="utf-8")
+    _state_path(agent).write_text(json.dumps(data, sort_keys=True), encoding="utf-8")
 
 
 def get_session_id(agent: str) -> str | None:

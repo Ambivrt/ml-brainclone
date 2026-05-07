@@ -66,7 +66,7 @@ def _load_cache() -> dict:
 
 def _save_cache(cache: dict):
     HASH_CACHE.parent.mkdir(parents=True, exist_ok=True)
-    HASH_CACHE.write_text(json.dumps(cache, indent=2, ensure_ascii=False),
+    HASH_CACHE.write_text(json.dumps(cache, indent=2, ensure_ascii=False, sort_keys=True),
                           encoding="utf-8")
 
 

@@ -250,7 +250,7 @@ def executor_tarry(task: dict) -> dict:
         "context": f"Dispatched task: {title}",
     })
     tmp = queue_path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(q, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp.write_text(json.dumps(q, indent=2, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     import os as _os
     _os.replace(str(tmp), str(queue_path))
     return {"success": True, "summary": f"Reminder skapad: {title}"}
@@ -281,7 +281,7 @@ def _write_heartbeat(path: Path, agent: str, state: str = "idle",
             "pid": os.getpid(), "agent": agent,
             "ts": datetime.now().isoformat(timespec="seconds"),
             "state": state, "task_id": task_id,
-        }, indent=2), encoding="utf-8")
+        }, indent=2, sort_keys=True), encoding="utf-8")
     except Exception:
         pass
 
