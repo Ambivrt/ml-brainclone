@@ -141,8 +141,65 @@ Report silently: `(Feedback: N hot, M broken)`.
 
 ---
 
+## Real-Time Complement: Eval Gate
+
+The nightly feedback audit catches patterns post-hoc. The **eval gate** catches violations in real-time, before output reaches the user.
+
+```
+Agent output
+  --> eval_gate.evaluate(text, agent)
+  --> Check against eval-rules.yaml (compiled feedback rules)
+  --> verdict: pass / flag / block
+  --> If violation: log to eval-gate.jsonl + warn (stderr/log)
+```
+
+**Shared module:** `eval/eval_gate.py` -- deterministic rule engine (no LLM). Loads YAML rules with hot-reload via mtime check.
+
+**Agents integrated:**
+| Agent | Hook point | Behavior |
+|-------|-----------|----------|
+| Larry CLI | PostToolUse Stop hook | Flags to stderr, never blocks |
+| Larry-Bot | After `_larry_reply()`, before `_send()` | Log warning |
+| Barry | After QA, before metadata | Print warning |
+| Harry | Before TTS + after STT | Print to stderr |
+
+**Rule format** (same pattern as `parry-rules.yaml`):
+```yaml
+- id: no_emoji
+  description: Inga emojis i output
+  pattern: "[\\U0001F600-\\U0001F9FF]"
+  match_type: regex
+  severity: flag
+  agents: [larry-cli, larry-bot, barry, harry]
+```
+
+**Audit trail:** Violations logged to `eval-gate.jsonl` -- consumed by nattskift dream batch (batch 8) for cross-session pattern analysis.
+
+The nightly audit and eval gate are complementary:
+- **Eval gate** = real-time, deterministic, catches known patterns as they happen
+- **Nightly audit** = batch, LLM-powered, discovers new patterns and prioritizes
+
+---
+
+## Cross-Session Analysis: Dream Batch
+
+The **dream batch** (nattskift batch 8) reads session transcripts and eval-gate violations to find patterns that span multiple sessions.
+
+**Input:** Session logs + `eval-gate.jsonl` + nattrapport-feedback-audit + existing feedback files.
+
+**Output:** `00-inbox/nattrapport-dream-YYYY-MM-DD.md` with:
+1. Recurring mistakes across sessions
+2. Converging workflows worth codifying
+3. Feedback candidates (new rules)
+4. Session statistics and eval-gate violation trends
+5. Memory suggestions (KG/feedback entries to create)
+
+See [memory-system.md](memory-system.md) Layer 4 for full dreaming architecture.
+
+---
+
 ## Scaling
 
 The collector handles 150+ feedback files in <1 second. The Claude batch processes the condensed summary, not raw files. Cost is one Haiku/Sonnet call per night (~$0.01-0.05).
 
-As feedback files grow beyond 200, the STALE section becomes increasingly valuable — it identifies rules to merge or archive, keeping the active set manageable.
+As feedback files grow beyond 200, the STALE section becomes increasingly valuable -- it identifies rules to merge or archive, keeping the active set manageable.

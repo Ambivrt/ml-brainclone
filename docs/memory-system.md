@@ -176,19 +176,94 @@ Updated by Larry at the end of each session (or when status changes).
 
 ---
 
+## Layer 4: Session Logs & Dreaming
+
+Session logs capture the full conversation transcript -- every turn, tool call, and reasoning step. This is the raw material for dreaming.
+
+### Session Logger
+
+A PostToolUse Stop hook that exports the complete CLI session transcript at session end.
+
+```
+Session ends (Stop hook)
+  --> claude sessions list --format json (find active session)
+  --> claude sessions export <id> --format json (dump transcript)
+  --> _private/session-logs/YYYY-MM-DD-HHmm.jsonl
+```
+
+**Format:** One JSON line per turn with role, content, tool_calls, timestamp.
+
+**Privacy:** L4 (gitignored). Retention: 30 days.
+
+### Dreaming (Nattskift batch 8)
+
+Dreaming is scheduled batch processing between sessions -- analogous to biological memory consolidation during sleep. A dream reads session logs and produces curated, cross-session insights.
+
+Inspired by Anthropic's Managed Agents dreaming architecture (Code with Claude 2026).
+
+```
+_private/session-logs/*.jsonl    (raw session transcripts)
+eval-gate.jsonl                  (violation patterns)
+nattrapport-feedback-audit.md    (HOT 10 + broken rules)
+         |
+         v
+  Dream batch (Sonnet, 05:00)
+         |
+         v
+00-inbox/nattrapport-dream-YYYY-MM-DD.md
+```
+
+**Dream report sections:**
+1. Recurring mistakes across sessions
+2. Converging workflows worth codifying
+3. Feedback candidates (new rules from observed patterns)
+4. Session statistics (count, length, tool usage, eval-gate violation rate)
+5. Memory suggestions (KG/feedback entries to create)
+
+**Three-layer memory hierarchy** (mirrors Anthropic's architecture):
+1. Raw session logs -- unprocessed interaction data
+2. Session-level memory writes -- local, noisy (diary, KG updates)
+3. Dream-curated knowledge -- compressed, deduplicated, enriched
+
+### KG Snapshots
+
+Daily point-in-time export of the knowledge graph state, taken before nattskift runs.
+
+**Output:** `_private/kg-snapshots/YYYY-MM-DD.json`
+
+**Format:** All active triples as JSON with subject, predicate, object, valid_from, confidence.
+
+**Retention:** 30 days. Enables rollback and drift detection.
+
+### Eval Gate
+
+Deterministic rule engine that evaluates agent output before delivery. Catches feedback-rule violations in real-time instead of post-hoc.
+
+**Rules:** YAML-based (same pattern as Parry's `parry-rules.yaml`). Covers privacy leaks, emoji/em-dash, pleasantries, bro-swedish, cross-contamination.
+
+**Agents:** Larry CLI (Stop hook), Larry-Bot (pre-send), Barry (post-QA), Harry (STT + TTS).
+
+**Audit:** Violations logged to `eval-gate.jsonl` for nattskift dream batch consumption.
+
+---
+
 ## How the Layers Work Together
 
 | Layer | Purpose | Technology | Access |
 |-------|---------|------------|--------|
 | **MEMORY.md** | Curated, structured memories (user prefs, feedback, project state) | Markdown files | Automatic at session start |
 | **MemPalace** | Semantic retrieval over entire vault + KG facts + diary continuity | ChromaDB + ONNX embeddings + MCP | 19 tools in Claude Code |
-| **_active-context.md** | Working memory — current session state | Markdown file | Read at session start (hook) |
+| **_active-context.md** | Working memory -- current session state | Markdown file | Read at session start (hook) |
+| **Session logs** | Raw conversation transcripts for dreaming | JSONL files | Consumed by dream batch |
+| **Eval Gate** | Real-time output quality enforcement | YAML rules + audit log | Inline in each agent |
 | **Vault** | All other knowledge | Markdown files | Search when needed |
 
 - MEMORY.md for precise, curated knowledge
 - MemPalace for broad semantic search when you don't know which file has what you need
 - KG for factual assertions that must stay current
 - Diary for session-to-session continuity
+- Session logs for cross-session pattern analysis (dreaming)
+- Eval Gate for real-time feedback enforcement
 - _active-context.md for "what am I doing right now"
 
 ---

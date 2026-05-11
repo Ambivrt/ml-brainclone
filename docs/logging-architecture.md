@@ -22,6 +22,10 @@ Larry, Barry, Harry, Parry, and the nightly batch jobs.
 | `03-projects/ml-brainclone/notifications/parry-guardian.log` | Parry verdicts + exception tracebacks | Parry guardian |
 | `03-projects/ml-brainclone/operations/nattskift/logs/` | One log per nightly batch run | `nattskift-runner.sh` |
 | `00-inbox/morgonbrief-YYYY-MM-DD.md` | Generated morning brief before mail | Nightly batch |
+| `_private/session-logs/YYYY-MM-DD-HHmm.jsonl` | Full CLI session transcripts (one JSON line per turn) | `session_logger.py` (PostToolUse Stop hook) |
+| `_private/kg-snapshots/YYYY-MM-DD.json` | Daily KG state export (all active triples) | `kg_snapshot.py` (pre-nattskift) |
+| `03-projects/ml-brainclone/eval/eval-gate.jsonl` | Real-time eval-gate violations (rule, agent, timestamp) | `eval_gate.py` (all agents) |
+| `00-inbox/nattrapport-dream-YYYY-MM-DD.md` | Dream report (cross-session patterns, feedback candidates) | Dream batch (nattskift batch 8) |
 
 All archives live in the vault under `_private/` (privacy level 3–4) or in
 the project-specific operations folder.
@@ -147,12 +151,33 @@ vault itself is synced via a private Git repository.
 
 ---
 
+## Session Logging & Dreaming
+
+Session logs capture the full CLI conversation transcript at session end, enabling cross-session analysis (dreaming).
+
+```
+Session ends (PostToolUse Stop hook)
+  --> session_logger.py
+  --> claude sessions list --format json (find active session)
+  --> claude sessions export <id> --format json (dump transcript)
+  --> _private/session-logs/YYYY-MM-DD-HHmm.jsonl
+```
+
+**Format:** One JSON line per turn with role, content, timestamp, tool_calls.
+
+**Retention:** 30 days. Consumed by the dream batch (nattskift batch 8, Sonnet) which produces `00-inbox/nattrapport-dream-YYYY-MM-DD.md`.
+
+**KG snapshots:** Daily point-in-time export of knowledge_graph.sqlite3 to `_private/kg-snapshots/YYYY-MM-DD.json`. Enables rollback and drift detection.
+
+---
+
 ## Known gaps
 
-- **MCP tool calls (mempalace and similar)** — call + return pairs are not
+- **MCP tool calls (mempalace and similar)** -- call + return pairs are not
   logged in a dedicated file. Claude Code already saves the full session
-  transcript under `.claude/projects/`, which covers this.
-- **Ad-hoc mail from arbitrary scripts** — any new script that sends mail
+  transcript under `.claude/projects/`, which covers this. Session logger
+  now also captures these via `claude sessions export`.
+- **Ad-hoc mail from arbitrary scripts** -- any new script that sends mail
   MUST route through `gws_mailer.send_mail()` or call
   `_archive_sent_mail` from shell. Greps for `gws gmail ... send` are part
   of the nightly hygiene pass.

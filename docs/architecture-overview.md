@@ -184,9 +184,15 @@ Layer 2: Semantic (MemPalace / Milla)
 
 Layer 3: Active Context
 {{VAULT_PATH}}/_active-context.md  ← Current session state
+
+Layer 4: Session Logs & Dreaming
+_private/session-logs/*.jsonl      ← Full CLI session transcripts
+_private/kg-snapshots/*.json       ← Daily KG state exports
+eval-gate.jsonl                    ← Real-time violation audit trail
 ```
 
 Memories persist across sessions. Created and updated by Larry during conversation.
+Session logs feed the dream batch (nattskift batch 8) for cross-session pattern analysis.
 See [memory-system.md](memory-system.md) for full architecture.
 
 ---
@@ -223,11 +229,13 @@ All batches run between 01:00–06:00 only.
 
 | Batch | Time | Model | Task |
 |-------|------|-------|------|
-| Batch 1 | 01:00 | Haiku | Vault hygiene (frontmatter, broken links, orphans) |
+| Batch 1 | 01:00 | Haiku | Vault hygiene (frontmatter, broken links, orphans) + KG snapshot |
 | Batch 2 | 02:00 | Haiku | Inbox analysis (triage, connection suggestions, stale check) |
 | Batch 3 | 03:00 | Haiku | Reddit/community monitoring (L1-2 only) |
-| Batch 4 | 04:00 | System | Milla mine — reindex vault (GPU-heavy, never run manually during active session) |
+| Batch 4 | 04:00 | System | Milla mine -- reindex vault (GPU-heavy, never run manually during active session) |
 | Batch 5 | 06:00 | Haiku | Morning brief (summary + vault stats + Reddit digest) |
+| Batch 7 | 04:30 | Haiku | Feedback audit (cross-reference rules vs. nattrapporter) |
+| Batch 8 | 05:00 | Sonnet | Dream batch (cross-session pattern analysis from session logs) |
 
 ---
 
