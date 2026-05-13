@@ -560,6 +560,33 @@ Register in `.claude/settings.json`:
 
 ---
 
+### 16. Stop Scripts Must Never Kill Desktop Applications
+
+**Problem:** A stop-all script that also kills desktop applications (browser, IDE, file manager, tunnel agents) will destroy the user's working session when `start-all -Force` is run. The user runs `-Force` expecting a clean daemon restart -- instead they lose their browser tabs, editor state, and tunnel connections.
+
+**Fix:** Stop scripts should only kill processes they started. Desktop applications (browser, Obsidian, Claude Code, cloudflared, etc.) are started by the user or OS, not by the daemon manager. They do not belong in the stop-all scope.
+
+```powershell
+# BAD -- kills desktop apps during daemon restart
+$desktopApps = @("msedge", "Obsidian", "claude", "cloudflared")
+foreach ($app in $desktopApps) {
+    Get-Process -Name $app | Stop-Process -Force
+}
+
+# GOOD -- only kill processes from the daemon registry
+foreach ($d in $daemons) {
+    $pidPath = Join-Path $NotifDir $d.PidFile
+    if (Test-Path $pidPath) {
+        $pid = (Get-Content $pidPath -Raw).Trim()
+        Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+    }
+}
+```
+
+**Rule:** If the daemon manager didn't start it, the daemon manager doesn't stop it. Desktop apps may be listed in start-all (for convenience), but never in stop-all.
+
+---
+
 ## Checklist for Adding a New Daemon
 
 1. Add to `daemon_registry.py` (or equivalent central list)

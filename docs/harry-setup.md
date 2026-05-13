@@ -59,11 +59,60 @@ Microphone → sounddevice (16kHz PCM) → WAV bytes
 Microphone → sounddevice (16kHz PCM) → Gemini Live API (WebSocket)
   ← Audio response (24kHz PCM) → sounddevice playback
   ← Text transcripts (both sides) → transcript-log (L4)
+  ← Tool calls (blocking FunctionCall) → vault_search / kg_query → response
   → mood-log (L4) + log_cost()
 ```
 Model: `gemini-live-2.5-flash-native-audio` (GA on Vertex AI).
 30 HD voices, barge-in, VAD, affective dialog.
 Note: Non-English languages (e.g. Swedish) are forced via system instruction — not officially supported.
+
+#### Live Tools (Blocking FunctionCall)
+
+Since `google-genai` 2.1.0, Gemini Live supports blocking function calls. The model pauses audio generation, calls a tool, waits for the result, and continues speaking with the answer. This gives the realtime voice agent access to the same knowledge sources as the text agent.
+
+Tools are defined as `types.FunctionDeclaration` and passed via `LiveConnectConfig(tools=...)`. The receive loop checks `response.tool_call` before `response.server_content`:
+
+```python
+LIVE_TOOLS = [
+    types.Tool(function_declarations=[
+        types.FunctionDeclaration(
+            name="vault_search",
+            description="Search the vault for relevant notes.",
+            parameters=types.Schema(
+                type="OBJECT",
+                properties={
+                    "query": types.Schema(type="STRING", description="Search query"),
+                },
+                required=["query"],
+            ),
+        ),
+    ])
+]
+
+config = types.LiveConnectConfig(
+    response_modalities=["AUDIO"],
+    tools=LIVE_TOOLS,
+    # ... other config
+)
+
+# In the receive loop:
+async for response in session.receive():
+    tc = response.tool_call
+    if tc:
+        for fc in tc.function_calls:
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, tool_handler, fc.args.get("query", ""))
+            await session.send_tool_response(
+                function_responses=[types.FunctionResponse(
+                    name=fc.name, id=fc.id,
+                    response={"result": result[:4000]},
+                )]
+            )
+        continue
+    # ... handle audio/text as before
+```
+
+Tool execution runs in a thread executor to avoid blocking the async event loop. Keep tool timeouts short (5-8s) -- the user is waiting in a live conversation.
 
 ---
 
@@ -314,7 +363,9 @@ Venice (MiniMax/ACE-Step) remains available for music generation via Playwright.
 - [x] Memory profiling — tracemalloc before/after voice processing
 - [x] Lyria 2 (instrumental) — live via Vertex AI
 - [x] Lyria 3 Pro (vocals/lyrics) — live via Vertex AI
-- [ ] Lyria bot trigger integration — planned
+- [x] Lyria 3 Clip (short jingles/intros) — live via Vertex AI
+- [x] Lyria bot trigger (`/musik` command) — live
+- [x] Gemini Live blocking tools (vault_search, kg_query) — live
 - [ ] Larry skills (/listen, /talk) — planned
 - [ ] Mood pattern analysis (night shift) — planned
 - [ ] Automatic Suno integration — planned

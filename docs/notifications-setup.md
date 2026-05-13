@@ -274,6 +274,11 @@ These logs are indexable by MemPalace and searchable in Obsidian.
 |---------|--------|
 | `/status` | Online-status, uptime, restarts, queue, voice |
 | `/voice` | Toggla röst på/av (default: av) |
+| `/live` | Toggle Live native audio (Gemini Realtime) vs TTS |
+| `/musik <prompt>` | Generate music via Lyria (instrumental) |
+| `/musik --pro <prompt>` | Generate song with vocals (Lyria 3 Pro) |
+| `/musik --clip <prompt>` | Generate short jingle (Lyria 3 Clip) |
+| `/musik --lyrics <prompt> \| <text>` | Generate song with custom lyrics |
 | `/queue` | Visa antal olästa i queue |
 | `/clearqueue` | Rensa hela notify-queue.json |
 | `/uptime` | Uptime + starttid + restarts |
