@@ -1,17 +1,20 @@
 """inject-context.py -- Pre-turn context injection hook.
 
-Designed to run as a Claude Code PreToolUse hook. Injects fresh bus events
-and fired reminders into the conversation via stderr, so the agent sees
-them mid-session without having to ask.
+Designed to run as a Claude Code PreToolUse hook. Two functions:
+1. Bus/reminder injection (throttled, all tools) -- keeps agent aware of
+   inter-agent events and fired reminders mid-session.
+2. Voice-profile hints (unthrottled, Edit/Write only) -- surfaces relevant
+   voice rules when the agent is about to write content, matched by file path.
 
-Throttled: runs at most once per THROTTLE_S seconds. All other invocations
-exit immediately after a timestamp check (~0ms overhead).
+Throttled: bus/reminder check runs at most once per THROTTLE_S seconds.
+Voice hints fire on every Edit/Write with zero throttle (~0ms overhead).
 
 Configure via environment variables:
-    VAULT_ROOT      -- vault directory (required)
-    BUS_DB_PATH     -- path to brains-bus SQLite DB (default: VAULT_ROOT/_private/brains-bus.db)
-    REMINDER_QUEUE  -- path to reminder queue JSON (default: VAULT_ROOT/_private/tarry-queue.json)
-    INJECT_THROTTLE -- seconds between injections (default: 90)
+    VAULT_ROOT       -- vault directory (required)
+    BUS_DB_PATH      -- path to brains-bus SQLite DB (default: VAULT_ROOT/_private/brains-bus.db)
+    REMINDER_QUEUE   -- path to reminder queue JSON (default: VAULT_ROOT/_private/tarry-queue.json)
+    VOICE_HINTS_PATH -- path to voice-profile-hints.json (default: VAULT_ROOT/.claude/hooks/voice-profile-hints.json)
+    INJECT_THROTTLE  -- seconds between bus/reminder injections (default: 90)
 """
 import json
 import os
@@ -23,6 +26,7 @@ from pathlib import Path
 VAULT = Path(os.environ.get("VAULT_ROOT", "."))
 BUS_DB = Path(os.environ.get("BUS_DB_PATH", str(VAULT / "_private" / "brains-bus.db")))
 REMINDER_Q = Path(os.environ.get("REMINDER_QUEUE", str(VAULT / "_private" / "tarry-queue.json")))
+VOICE_HINTS = Path(os.environ.get("VOICE_HINTS_PATH", str(VAULT / ".claude" / "hooks" / "voice-profile-hints.json")))
 STATE_FILE = VAULT / "_private" / ".inject-context-state.json"
 THROTTLE_S = int(os.environ.get("INJECT_THROTTLE", "90"))
 
@@ -71,7 +75,38 @@ def _get_fired_reminders(since_ts):
         return []
 
 
-def main():
+def _get_voice_hint(file_path):
+    if not VOICE_HINTS.exists():
+        return None
+    try:
+        hints = json.loads(VOICE_HINTS.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    fp_lower = file_path.lower().replace("\\", "/")
+    for pattern in hints.get("patterns", []):
+        for keyword in pattern.get("match", []):
+            if keyword.lower() in fp_lower:
+                return pattern["hint"]
+    return hints.get("default_hint")
+
+
+def _inject_voice_profile():
+    tool = os.environ.get("CLAUDE_TOOL", "")
+    if tool not in ("Edit", "Write"):
+        return
+    try:
+        tool_input = json.loads(os.environ.get("CLAUDE_TOOL_INPUT", "{}"))
+    except (json.JSONDecodeError, TypeError):
+        return
+    file_path = tool_input.get("file_path", "")
+    if not file_path:
+        return
+    hint = _get_voice_hint(file_path)
+    if hint:
+        sys.stderr.write(hint + "\n")
+
+
+def _inject_bus_reminders():
     state = _load_state()
     now = time.time()
 
@@ -109,6 +144,11 @@ def main():
             lines.append(f"  {r.get('id', '?')}: {r.get('message', '')[:120]}")
 
     sys.stderr.write("\n".join(lines) + "\n")
+
+
+def main():
+    _inject_voice_profile()
+    _inject_bus_reminders()
 
 
 if __name__ == "__main__":

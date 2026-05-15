@@ -406,6 +406,22 @@ See [docs/skills-system.md](docs/skills-system.md) for how to create your own sk
 
 ---
 
+## Voice Profile
+
+Three layers that make the agent write like you, not like an AI:
+
+| Layer | Mechanism | When |
+|-------|-----------|------|
+| **Milla KG** | Queryable facts about your voice, taste, beliefs | On-demand (`kg_query`) |
+| **Eval Gate** | Deterministic regex rules that flag AI-generic output | Post-output, every response |
+| **Inject Hook** | Context-matched voice hints injected at Edit/Write | Pre-output, on file write |
+
+The key insight: 100 rules loaded every session means 0 rules applied. Surgical retrieval beats bulk injection.
+
+See [docs/voice-profile.md](docs/voice-profile.md) for setup, the interview framework, and maintenance.
+
+---
+
 ## Design Principles
 
 1. **Primary model first, always.** Best available model. Fallback only on refusal.
@@ -415,3 +431,4 @@ See [docs/skills-system.md](docs/skills-system.md) for how to create your own sk
 5. **Zero footprint as an option.** Always possible to run fully local/private. Not the default, but available.
 6. **Text-only vault.** No binary files stored in the vault. Reference external paths for media.
 7. **Git is the source of truth.** No cloud drives. Git push/pull between machines.
+8. **Voice fidelity over volume.** Surface the right rule at the right moment. Three layers beat one file.
