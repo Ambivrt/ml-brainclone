@@ -1,14 +1,14 @@
-# Bert Setup — Sentiment Sensor
+# Warry Setup — Sentiment Sensor
 
-Bert is Larry's emotional barometer. It measures sentiment in text — single messages, conversations, or entire archives — without interpreting or advising. Numbers, trends, graphs. The user owns the insight.
+Warry is Larry's emotional barometer. It measures sentiment in text — single messages, conversations, or entire archives — without interpreting or advising. Numbers, trends, graphs. The user owns the insight.
 
 - **Larry** — thinks, plans, orchestrates
 - **Barry** — sees (images)
 - **Harry** — hears and speaks (audio)
 - **Parry** — guards, filters, judges
 - **Tarry** — remembers when
-- **Farry** — understands all languages
-- **Bert** — feels the temperature
+- **Farry** — watches and directs (video)
+- **Warry** — feels the temperature
 
 ---
 

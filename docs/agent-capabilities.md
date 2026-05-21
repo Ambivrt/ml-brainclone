@@ -208,38 +208,38 @@ Active skill domains: brand-thinking, business-law, seo-sem, business-planning, 
 
 ---
 
-## Farry — Understands (Universal Interpreter)
+## Farry — Directs (Video Agent)
 
-**Modality:** Language — human, machine, code, agent bridge
-**System:** Larry skill (not a daemon)
+**Modality:** Video — understanding, analysis, generation
+**System:** On-demand subprocess (planned, not yet active)
 
 ### Capabilities
 | Capability | Tool / Method | Notes |
 |------------|---------------|-------|
-| Human languages | Claude native | All languages |
-| Machine → human | Claude native | Error codes, legal, medical |
-| Human → machine | Claude native | Natural language → CLI/API |
-| Code ↔ code | Claude native | Python ↔ JS, Bash ↔ PowerShell |
-| Agent ↔ agent | Semantic bridge | Cross-modal translation |
+| Video understanding | Gemini Omni Flash | Analyze footage, describe scenes |
+| Timeline analysis | Gemini Omni Flash | Key moments, transitions, structure |
+| Clip generation | Gemini Omni Flash | Generate short clips from prompts |
+| Multimodal reasoning | Gemini Omni Flash | Combined video + audio + text |
+| Event extraction | Gemini Omni Flash | Structured data from video content |
 
 ---
 
-## Bert — Feels (Emotional Sensor)
+## Warry — Feels (Emotional Sensor)
 
 **Modality:** Sentiment — measures emotional temperature, trends, inflection points
-**System:** Python module (`bert_service.py`) — lazy-load, local GPU inference
+**System:** Python module (`warry_service.py`) — lazy-load, local GPU inference
 
 ### Capabilities
 | Capability | Tool / Method | Notes |
 |------------|---------------|-------|
-| Score single message | `bert.score(text)` → -1.0 → +1.0 | ~500 msg/min on GPU |
-| Batch analysis | `bert.batch(messages)` | Per-person sentiment + dynamics |
-| Conversation analysis | `bert.analyze_conversation(archive)` | Trend line, inflection points |
+| Score single message | `warry.score(text)` → -1.0 → +1.0 | ~500 msg/min on GPU |
+| Batch analysis | `warry.batch(messages)` | Per-person sentiment + dynamics |
+| Conversation analysis | `warry.analyze_conversation(archive)` | Trend line, inflection points |
 | Daily mood snapshot | Night shift / Darry | Appends to mood log |
 | Sustained negative alert | Auto-trigger → Tarry | >3 messages below -0.5 |
 
 **Model:** `cardiffnlp/twitter-xlm-roberta-base-sentiment` (multilingual, ~1.1 GB VRAM)
-**Rule:** Bert measures, never interprets. Numbers and trends — the user owns the insight.
+**Rule:** Warry measures, never interprets. Numbers and trends — the user owns the insight.
 
 ---
 
@@ -257,13 +257,13 @@ Larry (orchestrator)
   |
   |-- SERVICES
   |   |-- Milla (memory) --> MemPalace MCP, KG, diary, semantic search
-  |   |-- Bert (emotion) --> XLM-RoBERTa sentiment, mood tracking
+  |   |-- Warry (emotion) --> XLM-RoBERTa sentiment, mood tracking
   |   |-- Parry (judgment) --> privacy + tone, gatekeeper
   |   |-- Tarry (time) --> reminders, deadlines, proactivity
   |   |-- Carry (logistics) --> transport in/out/internal
   |   |-- Darry (sleep) --> night shift Light/Deep/REM
   |   |-- Scarry (conscience) --> retroactive procrastination scanner
-  |   +-- Farry (language) --> universal interpreter
+  |   +-- Farry (video) --> Gemini Omni Flash (planned)
   |
   +-- INFRASTRUCTURE
       |-- Brains-bus (nervous system) --> SQLite WAL, event routing

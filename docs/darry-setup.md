@@ -463,7 +463,7 @@ Running both systems simultaneously revealed several patterns:
 | **Carry** | Receives morning brief for delivery (email, vault storage) |
 | **Milla** | Deep Sleep dispatches memory indexing work to Milla |
 | **Scarry** | Hooked into Deep Sleep. Darry runs Scarry scanner, feeds results to REM if triggered |
-| **Bert** | Deep Sleep runs daily mood snapshot (Warry/Bert sentiment analysis) |
+| **Warry** | Deep Sleep runs daily mood snapshot (sentiment analysis) |
 | **Larry** | Receives morning brief at session init. Can request dream topics via bus |
 
 ---

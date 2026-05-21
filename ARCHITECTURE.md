@@ -47,13 +47,13 @@ One orchestrator. Three senses. Eight organs. Three bones.
 | Service | Role |
 |---------|------|
 | **Memory (Milla)** | Semantic search, knowledge graph, diary, palace traversal. Never forgets. |
-| **Emotion (Bert)** | Sentiment scoring (-1.0 to +1.0), mood trending, inflection detection with ASCII mood bars. CLI: analyze, trend, status, score. Measures, never interprets. |
+| **Emotion (Warry)** | Sentiment scoring (-1.0 to +1.0), mood trending, inflection detection with ASCII mood bars. CLI: analyze, trend, status, score. Measures, never interprets. |
 | **Judgment (Parry)** | Privacy enforcement, tone control, quality gating. Flags, never blocks. |
 | **Time (Tarry)** | Reminders, follow-ups, recurring tasks. The agent that lingers. |
 | **Logistics (Carry)** | Transport content in/out/between systems. Pipelines with retry and approval gates. |
 | **Sleep (Darry)** | Night shift 2.0: Light Sleep (quick hygiene), Deep Sleep (heavy processing), REM Sleep (creative insight). Currently in Phase 1 migration mode — running parallel with legacy batch runner. |
 | **Conscience (Scarry)** | Retroactive scanner. Finds what you mentioned but never did. Asks, never instructs. |
-| **Language (Farry)** | All languages, human and machine. Translation, format conversion, bus integration, statistics tracking. CLI: translate, detect, stats, status, ordbok, convert. |
+| **Video (Farry)** | Video understanding, analysis, key moment extraction, clip generation. Multimodal video reasoning. Status: planned. |
 
 All agents handle all four privacy levels. All have access to the freedom router.
 
@@ -98,10 +98,10 @@ TEXT MODE (primary / Larry)
  │   ├─ "Follow up on X tomorrow" → Follow-up scheduled
  │   └─ "Every Monday: X" → Recurring task registered
  │
- ├─ Translation task? → Invokes TRANSLATION (Farry skill, inline)
- │   ├─ "Translate this" → Human language translation
- │   ├─ "What does this JSON mean?" → Machine→human explanation
- │   └─ "Convert this Python to JS" → Code↔code translation
+ ├─ Video task? → Invokes VIDEO MODE (Farry, planned)
+ │   ├─ "Analyze this video" → Multimodal understanding
+ │   ├─ "Extract key moments" → Timeline analysis
+ │   └─ "Generate a clip" → Video generation
  │
  └─ Multi-modal? → Orchestrates sequence
      └─ "Photograph the whiteboard, transcribe,
@@ -119,8 +119,8 @@ Two patterns for extending the ecosystem:
 |---------|----------|--------------|---------|
 | **Daemon** | Parry, Tarry, Carry, Darry | Separate long-running Python process | Windows Task Scheduler / daemon-manager |
 | **Session** | Garry | Runs on demand, exits when done | Not needed — Larry invokes directly |
-| **Skill** | Farry | Inline Larry capability, no separate process | Not needed — lives inside Larry |
-| **Scanner** | Scarry, Bert | CLI tool, scheduled or on-demand | Via Darry deep sleep or manual |
+| **Planned** | Farry | On-demand video processing, not yet active | Not needed — invoked by Larry |
+| **Scanner** | Scarry, Warry | CLI tool, scheduled or on-demand | Via Darry deep sleep or manual |
 
 Daemons are appropriate for background work that must happen independently of Larry's attention (gating, scheduling). Skills are appropriate for capabilities Larry invokes on demand.
 
@@ -371,13 +371,13 @@ Apps emerge when you notice yourself doing the same multi-step task repeatedly a
 | **Barry** | Image generation | Larry | Venice (Playwright) | On-demand subprocess |
 | **Harry** | Audio / TTS | Larry | Vertex AI / Whisper | On-demand subprocess |
 | **Milla** | Semantic memory | All agents (via MCP) | ChromaDB | Persistent HTTP/SSE server |
-| **Bert** | Sentiment analysis | Larry / Telegram listener | XLM-RoBERTa (GPU) | On-demand (lazy-load) — Phase 1 complete |
+| **Warry** | Sentiment analysis | Larry / Telegram listener | XLM-RoBERTa (GPU) | On-demand (lazy-load) |
 | **Parry** | Privacy gatekeeper | Always-on middleware | Larry (flags) | Background daemon |
 | **Tarry** | Time / scheduling | Larry (queue write) | Larry (fires reminders) | Background daemon |
 | **Carry** | Content logistics | Larry / Darry / events | Filesystem, APIs, Playwright | Background daemon |
 | **Darry** | Night processing | Scheduled (nightly) | Larry, Milla, Carry, Scarry | Background daemon |
 | **Scarry** | Procrastination scan | Darry / Larry (on-demand) | Milla, vault | Scheduled script |
-| **Farry** | Translation | Larry (skill call) | — (inline) | Larry skill, no process |
+| **Farry** | Video | Larry (on-demand) | Gemini Omni Flash | On-demand (planned) |
 
 All inter-agent communication flows through the brains-bus (SQLite). Parry sees all bus events as gatekeeper before they reach their destination.
 

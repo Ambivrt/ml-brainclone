@@ -24,7 +24,7 @@ ml-brainclone/
 │   ├── memory-system.md          <- Persistent memory architecture
 │   ├── parry-setup.md            <- Parry (gatekeeper agent) setup + commands
 │   ├── tarry-setup.md            <- Tarry (temporal agent) setup + queue + Task Scheduler
-│   ├── farry-setup.md            <- Farry (translation skill) setup + Telegram commands
+│   ├── farry-setup.md            <- Farry (video agent) setup
 │   ├── brains-bus-setup.md       <- SQLite event bus between agents, guarded by Parry
 │   ├── task-dispatch.md          <- Inter-agent work queue: dispatch from any channel
 │   ├── proactivity.md            <- Larry acts, doesn't just report: scanner + dispatcher + nightly triggers
@@ -83,15 +83,15 @@ ml-brainclone/
 | Agent | Function | What it does | Technology |
 |-------|----------|-------------|------------|
 | **Milla** | Memory | Semantic search, knowledge graph, diary, palace traversal. Never forgets. | MemPalace MCP (ChromaDB, GPU) |
-| **Bert** | Emotion | Sentiment scoring, mood tracking, trend detection. Measures, never interprets. | XLM-RoBERTa (local GPU) |
+| **Warry** | Emotion | Sentiment scoring, mood tracking, trend detection. Measures, never interprets. | XLM-RoBERTa (local GPU) |
 | **Parry** | Judgment | Privacy enforcement, tone control, quality gating. | Python daemon (parry_service.py) |
 | **Tarry** | Time | Reminders, follow-ups, recurring tasks, interrupted session recovery. | Python daemon (tarry_service.py) |
 | **Carry** | Logistics | Transport content in/out/between systems. Pipelines with retry. | Python daemon (carry_service.py) |
 | **Darry** | Sleep | Night shift 2.0: Light/Deep/REM sleep phases. Adaptive nightly processing. | Python daemon (darry_service.py) |
 | **Scarry** | Conscience | Retroactive scanner. Finds procrastinated and forgotten tasks. Hooked into Darry deep sleep. | Python script (scheduled) |
-| **Farry** | Language | All languages, human and machine. Translation, format conversion, bus integration. | Larry skill (inline) |
+| **Farry** | Video | Video understanding, analysis, clip generation. Multimodal video reasoning. | Gemini Omni Flash (planned) |
 
-Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when needed. Daemons (Parry, Tarry, Carry, Darry) run in the background. All daemons managed via `daemon-manager.py` (unified start/stop/status/health). Scarry runs on schedule via Darry. Farry and Bert are invoked on demand.
+Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when needed. Daemons (Parry, Tarry, Carry, Darry) run in the background. All daemons managed via `daemon-manager.py` (unified start/stop/status/health). Scarry runs on schedule via Darry. Warry is invoked on demand. Farry is planned.
 
 ---
 
@@ -186,7 +186,7 @@ Throughout all files, replace these with your own values:
 | [docs/agent-capabilities.md](docs/agent-capabilities.md) | Capability matrix for all agents: tools, skill domains, ecosystem flow |
 | [docs/tarry-setup.md](docs/tarry-setup.md) | Tarry temporal daemon: reminders, follow-ups, release chains, Task Scheduler autostart |
 | [docs/content-campaigns.md](docs/content-campaigns.md) | Content campaign management: calendar + Tarry chains + morning brief pipeline |
-| [docs/farry-setup.md](docs/farry-setup.md) | Farry translation skill: all languages, code↔code, Telegram /f command |
+| [docs/farry-setup.md](docs/farry-setup.md) | Farry video agent: multimodal video reasoning |
 | [architecture/personalities/README.md](architecture/personalities/README.md) | Personality system: character sheets, switching rules, Parry middleware |
 | [architecture/telegram-v2-spec.md](architecture/telegram-v2-spec.md) | Platform adapter spec: multi-channel message routing (Telegram, CLI, email) |
 
