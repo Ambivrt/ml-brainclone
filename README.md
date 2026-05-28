@@ -24,6 +24,7 @@ ml-brainclone/
 │   ├── memory-system.md          <- Persistent memory architecture
 │   ├── parry-setup.md            <- Parry (gatekeeper agent) setup + commands
 │   ├── tarry-setup.md            <- Tarry (temporal agent) setup + queue + Task Scheduler
+│   ├── karry-setup.md            <- Karry (location agent) setup + geo-fences + MCP tools
 │   ├── farry-setup.md            <- Farry (video agent) setup
 │   ├── brains-bus-setup.md       <- SQLite event bus between agents, guarded by Parry
 │   ├── task-dispatch.md          <- Inter-agent work queue: dispatch from any channel
@@ -89,9 +90,10 @@ ml-brainclone/
 | **Carry** | Logistics | Transport content in/out/between systems. Pipelines with retry. | Python daemon (carry_service.py) |
 | **Darry** | Sleep | Night shift 2.0: Light/Deep/REM sleep phases. Adaptive nightly processing. | Python daemon (darry_service.py) |
 | **Scarry** | Conscience | Retroactive scanner. Finds procrastinated and forgotten tasks. Hooked into Darry deep sleep. | Python script (scheduled) |
+| **Karry** | Location | Spatial awareness. Position tracking, geo-fences, place intelligence, navigation. Hybrid daemon + MCP server. | Google Maps API + Nominatim |
 | **Farry** | Video | Video understanding, analysis, clip generation. Multimodal video reasoning. | Gemini Omni Flash (planned) |
 
-Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when needed. Daemons (Parry, Tarry, Carry, Darry) run in the background. All daemons managed via `daemon-manager.py` (unified start/stop/status/health). Scarry runs on schedule via Darry. Warry is invoked on demand. Farry is planned.
+Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when needed. Daemons (Parry, Tarry, Carry, Darry, Karry) run in the background. All daemons managed via `daemon-manager.py` (unified start/stop/status/health). Scarry runs on schedule via Darry. Warry is invoked on demand. Farry is planned.
 
 ---
 
@@ -186,6 +188,7 @@ Throughout all files, replace these with your own values:
 | [docs/agent-capabilities.md](docs/agent-capabilities.md) | Capability matrix for all agents: tools, skill domains, ecosystem flow |
 | [docs/tarry-setup.md](docs/tarry-setup.md) | Tarry temporal daemon: reminders, follow-ups, release chains, Task Scheduler autostart |
 | [docs/content-campaigns.md](docs/content-campaigns.md) | Content campaign management: calendar + Tarry chains + morning brief pipeline |
+| [docs/karry-setup.md](docs/karry-setup.md) | Karry location agent: position tracking, geo-fences, place intelligence |
 | [docs/farry-setup.md](docs/farry-setup.md) | Farry video agent: multimodal video reasoning |
 | [architecture/personalities/README.md](architecture/personalities/README.md) | Personality system: character sheets, switching rules, Parry middleware |
 | [architecture/telegram-v2-spec.md](architecture/telegram-v2-spec.md) | Platform adapter spec: multi-channel message routing (Telegram, CLI, email) |

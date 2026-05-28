@@ -53,6 +53,7 @@ One orchestrator. Three senses. Eight organs. Three bones.
 | **Logistics (Carry)** | Transport content in/out/between systems. Pipelines with retry and approval gates. |
 | **Sleep (Darry)** | Night shift 2.0: Light Sleep (quick hygiene), Deep Sleep (heavy processing), REM Sleep (creative insight). Currently in Phase 1 migration mode — running parallel with legacy batch runner. |
 | **Conscience (Scarry)** | Retroactive scanner. Finds what you mentioned but never did. Asks, never instructs. |
+| **Location (Karry)** | Spatial awareness. Position tracking, geo-fences, place intelligence, navigation. Hybrid daemon + MCP server. |
 | **Video (Farry)** | Video understanding, analysis, key moment extraction, clip generation. Multimodal video reasoning. Status: planned. |
 
 All agents handle all four privacy levels. All have access to the freedom router.
@@ -117,7 +118,7 @@ Two patterns for extending the ecosystem:
 
 | Pattern | Examples | Process model | Restart |
 |---------|----------|--------------|---------|
-| **Daemon** | Parry, Tarry, Carry, Darry | Separate long-running Python process | Windows Task Scheduler / daemon-manager |
+| **Daemon** | Parry, Tarry, Carry, Darry, Karry | Separate long-running Python process | Windows Task Scheduler / daemon-manager |
 | **Session** | Garry | Runs on demand, exits when done | Not needed — Larry invokes directly |
 | **Planned** | Farry | On-demand video processing, not yet active | Not needed — invoked by Larry |
 | **Scanner** | Scarry, Warry | CLI tool, scheduled or on-demand | Via Darry deep sleep or manual |
@@ -377,6 +378,7 @@ Apps emerge when you notice yourself doing the same multi-step task repeatedly a
 | **Carry** | Content logistics | Larry / Darry / events | Filesystem, APIs, Playwright | Background daemon |
 | **Darry** | Night processing | Scheduled (nightly) | Larry, Milla, Carry, Scarry | Background daemon |
 | **Scarry** | Procrastination scan | Darry / Larry (on-demand) | Milla, vault | Scheduled script |
+| **Karry** | Location | Always-on daemon + MCP | Google Maps, Nominatim | Background daemon + MCP |
 | **Farry** | Video | Larry (on-demand) | Gemini Omni Flash | On-demand (planned) |
 
 All inter-agent communication flows through the brains-bus (SQLite). Parry sees all bus events as gatekeeper before they reach their destination.
