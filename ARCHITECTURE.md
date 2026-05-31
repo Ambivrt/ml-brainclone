@@ -127,6 +127,36 @@ Daemons are appropriate for background work that must happen independently of La
 
 ---
 
+## Capability Composition
+
+The agent model above starts simple: one function, one daemon. Time is the time daemon, memory is the memory service, dreams are the night-shift daemon. It works until a daemon hangs silently and the function it owns just stops, with nothing there to notice. Concentrating a function in one process makes that process a single point of failure.
+
+The next step is composition. A function like time, triggers, or coordination becomes a **capability**: a shared module that any brain can compose and run in its own process. A brain is then defined by its unique core plus the capabilities it composes, declared in a small manifest. Adding a capability to a brain is one line, not a rewrite.
+
+Capabilities come in two classes, which keeps the model honest about a single machine with one GPU:
+
+| Class | Runs | Examples | Failsafe via |
+|-------|------|----------|--------------|
+| **Embedded** | In-process in every brain, shared code | time/triggers, conscience, dream, coordination | Exists everywhere; no central owner |
+| **Brokered** | A thin client against a singleton service | memory, vision, hearing, sentiment | Service watched by the watchdog, called over the bus/MCP |
+
+A brain runs its embedded capabilities on two cadences from a small runtime: a slow tick for scheduled work and a fast tick for bus events. Each capability tick is isolated, so a fault in one capability is reported and skipped without aborting the others. This is a direct upgrade over a single monolithic loop, where one exception aborts the whole cycle.
+
+### Failsafe coordination: local free, global leased
+
+Some triggers are a brain's own business (its own schedule). Others are global: a reminder to the user, a nightly job that must fire exactly once no matter how many brains are running. The split is a hybrid lease:
+
+- **Local triggers** run in their owning brain with no coordination.
+- **Global triggers** are claimed with a lease on the shared bus before firing. One brain wins the claim and fires; the others skip. If the holder dies, the lease expires and the next brain takes over on the next cycle. The work fires exactly once and recovers itself.
+
+Execution that only one brain can perform (a brain-specific job) is still protected by the watchdog: the lease guards *firing*, the watchdog guards *running*. Together they remove the single point of failure without inventing distributed-systems complexity the scale does not need.
+
+### Why this matters for a scaffold
+
+You do not need every brain to carry every capability on day one. Start with one brain and a time/trigger capability. The value is the shape: shared capability modules, composed per brain, coordinated by a lease for the few things that are truly global. It grows by adding capabilities and brains, not by rewriting loops.
+
+---
+
 ## Freedom Router
 
 The router solves one question: the primary model said no — who says yes?
