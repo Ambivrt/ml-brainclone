@@ -51,7 +51,7 @@ One orchestrator. Three senses. Eight organs. Three bones.
 | **Judgment (Parry)** | Privacy enforcement, tone control, quality gating. Flags, never blocks. |
 | **Time (Tarry)** | Reminders, follow-ups, recurring tasks. The agent that lingers. |
 | **Logistics (Carry)** | Transport content in/out/between systems. Pipelines with retry and approval gates. |
-| **Sleep (Darry)** | Night shift 2.0: Light Sleep (quick hygiene), Deep Sleep (heavy processing), REM Sleep (creative insight). Currently in Phase 1 migration mode — running parallel with legacy batch runner. |
+| **Sleep (Darry)** | Night shift 2.0: Light Sleep (quick hygiene), Deep Sleep (heavy processing), REM Sleep (creative insight). Currently in Phase 1 migration mode, running parallel with legacy batch runner. |
 | **Conscience (Scarry)** | Retroactive scanner. Finds what you mentioned but never did. Asks, never instructs. |
 | **Location (Karry)** | Spatial awareness. Position tracking, geo-fences, place intelligence, navigation. Hybrid daemon + MCP server. |
 | **Video (Farry)** | Video understanding, analysis, key moment extraction, clip generation. Multimodal video reasoning. Status: planned. |
@@ -110,17 +110,17 @@ TEXT MODE (primary / Larry)
          Image (capture→analysis) → Text (summary) → Audio (TTS)
 ```
 
-You can also go directly to Image or Audio mode without Text orchestrating — but Text always has context of what happened.
+You can also go directly to Image or Audio mode without Text orchestrating, but Text always has context of what happened.
 
-### Agent Architecture — Daemon vs Skill
+### Agent Architecture, Daemon vs Skill
 
 Two patterns for extending the ecosystem:
 
 | Pattern | Examples | Process model | Restart |
 |---------|----------|--------------|---------|
 | **Daemon** | Parry, Tarry, Carry, Darry, Karry | Separate long-running Python process | Windows Task Scheduler / daemon-manager |
-| **Session** | Garry | Runs on demand, exits when done | Not needed — Larry invokes directly |
-| **Planned** | Farry | On-demand video processing, not yet active | Not needed — invoked by Larry |
+| **Session** | Garry | Runs on demand, exits when done | Not needed, Larry invokes directly |
+| **Planned** | Farry | On-demand video processing, not yet active | Not needed, invoked by Larry |
 | **Scanner** | Scarry, Warry | CLI tool, scheduled or on-demand | Via Darry deep sleep or manual |
 
 Daemons are appropriate for background work that must happen independently of Larry's attention (gating, scheduling). Skills are appropriate for capabilities Larry invokes on demand.
@@ -159,7 +159,7 @@ You do not need every brain to carry every capability on day one. Start with one
 
 ## Freedom Router
 
-The router solves one question: the primary model said no — who says yes?
+The router solves one question: the primary model said no, who says yes?
 
 ```
 REQUEST
@@ -206,7 +206,7 @@ REQUEST
 
 ### What the router does NOT do
 
-- **Does NOT route based on privacy level.** Privacy level determines which models are *allowed* — that's your configuration, not the router's decision.
+- **Does NOT route based on privacy level.** Privacy level determines which models are *allowed*, that's your configuration, not the router's decision.
 - **Does NOT route based on cost.** Best model first, always.
 - **Does NOT censor.** If the primary model refuses, it routes onward. It doesn't judge why.
 
@@ -228,31 +228,31 @@ Customize these to your preferences and available accounts.
 
 | Priority | Model | Strength | Limitation |
 |----------|-------|----------|------------|
-| **Primary — Analysis** | Claude Vision | Best image understanding, OCR | Guardrails on some content |
-| **Primary — Generation** | Venice Studio (Chroma) | Free tier, good quality | Browser-based (Playwright) |
-| **Fallback — Generation** | Venice API (Flux/others) | More models available | Credits required |
+| **Primary, Analysis** | Claude Vision | Best image understanding, OCR | Guardrails on some content |
+| **Primary, Generation** | Venice Studio (Chroma) | Free tier, good quality | Browser-based (Playwright) |
+| **Fallback, Generation** | Venice API (Flux/others) | More models available | Credits required |
 
 ### Audio mode
 
 | Priority | Model | Strength | Limitation |
 |----------|-------|----------|------------|
-| **Primary — TTS** | Gemini TTS (Vertex AI) | 30 voices, emotion tags, free tier | Requires GCP account |
-| **Primary — STT** | Whisper (OpenAI) | Best transcription | Logging |
-| **Fallback — TTS** | Local TTS (Coqui) | Private | Less natural |
-| **Fallback — STT** | Local Whisper | Private | Lower quality |
+| **Primary, TTS** | Gemini TTS (Vertex AI) | 30 voices, emotion tags, free tier | Requires GCP account |
+| **Primary, STT** | Whisper (OpenAI) | Best transcription | Logging |
+| **Fallback, TTS** | Local TTS (Coqui) | Private | Less natural |
+| **Fallback, STT** | Local Whisper | Private | Lower quality |
 
 ---
 
-## Privacy Levels — Allowed Models
+## Privacy Levels, Allowed Models
 
 You configure which models are *allowed* per privacy level. The router picks the best one within the allowed pool.
 
 | Level | Description | Suggested model policy |
 |-------|-------------|----------------------|
-| **L1 — Open** | Public info, work content | All models |
-| **L2 — Personal** | Private but not sensitive | All models |
-| **L3 — Private** | Sensitive: health, finance, relationships | E2EE models preferred (e.g., Venice) |
-| **L4 — Subconscious** | Deeply personal, AI observations | E2EE models or local only |
+| **L1, Open** | Public info, work content | All models |
+| **L2, Personal** | Private but not sensitive | All models |
+| **L3, Private** | Sensitive: health, finance, relationships | E2EE models preferred (e.g., Venice) |
+| **L4, Subconscious** | Deeply personal, AI observations | E2EE models or local only |
 
 See [docs/privacy-architecture.md](docs/privacy-architecture.md) for the full privacy model.
 
@@ -281,26 +281,26 @@ See [docs/privacy-architecture.md](docs/privacy-architecture.md) for the full pr
 ## Vault Structure
 
 ```
-00-inbox/          — Brain dumps, quick thoughts, unprocessed
-01-personal/       — Profile, interests, goals, health
-02-work/           — Job, clients, deliverables
-03-projects/       — Active projects with status and deadlines
-04-knowledge/      — Research, articles, insights, tutorials
-05-templates/      — Note templates (project, meeting, research, daily)
-06-archive/        — Completed material, inactive projects
-_private/          — Privacy level 3-4 (sensitive and deeply personal)
+00-inbox/         , Brain dumps, quick thoughts, unprocessed
+01-personal/      , Profile, interests, goals, health
+02-work/          , Job, clients, deliverables
+03-projects/      , Active projects with status and deadlines
+04-knowledge/     , Research, articles, insights, tutorials
+05-templates/     , Note templates (project, meeting, research, daily)
+06-archive/       , Completed material, inactive projects
+_private/         , Privacy level 3-4 (sensitive and deeply personal)
 ```
 
 ### Special Files
 
 | File | Purpose |
 |------|---------|
-| `CLAUDE.md` | Vault rules, structure, conventions — read by Claude Code |
-| `_active-context.md` | Working memory between sessions — read at session start |
+| `CLAUDE.md` | Vault rules, structure, conventions, read by Claude Code |
+| `_active-context.md` | Working memory between sessions, read at session start |
 
 ---
 
-## Vault Visualization — Obsidian Bases
+## Vault Visualization, Obsidian Bases
 
 `.base` files in `_bases/` create live database views on top of vault frontmatter. Built into Obsidian v1.9.10+. No plugin required. Faster than Dataview.
 
@@ -343,7 +343,7 @@ The system is evolving toward a unified PWA that serves as the primary interface
 │  │ Interface adapters:                  │              │
 │  │  • PWA chat (websocket)              │              │
 │  │  • Telegram bot (long-poll)          │              │
-│  │  • CLI (Claude Code — existing)      │              │
+│  │  • CLI (Claude Code, existing)      │              │
 │  └──────────────────────────────────────┘              │
 └─────────────────────────────────────────────────────────┘
 ```

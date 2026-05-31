@@ -99,13 +99,13 @@ Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when
 
 ## Key Design Decisions
 
-- **Text-only vault** — No binary files (images, audio) in the vault. External storage only. The vault is pure markdown.
-- **Git sync** — The vault syncs via Git (private GitHub repo). No cloud drive dependencies.
-- **Privacy layers** — Four levels (L1 public through L4 deeply personal), enforced by code.
-- **Best model first** — Always use the best available model. Fall back to freer models only on guardrail refusal.
-- **Robust over quick** — Never a hack. The system must be reliable enough to trust as your second brain.
-- **Yolo mode** — Larry runs with `--dangerously-skip-permissions`. No confirmation prompts.
-- **Nightly automation** — Scheduled tasks run overnight (Claude Haiku): vault hygiene, inbox triage, knowledge distillation. Darry (sleep-cycle daemon) runs in migration mode alongside the legacy batch runner.
+- **Text-only vault**, No binary files (images, audio) in the vault. External storage only. The vault is pure markdown.
+- **Git sync**, The vault syncs via Git (private GitHub repo). No cloud drive dependencies.
+- **Privacy layers**, Four levels (L1 public through L4 deeply personal), enforced by code.
+- **Best model first**, Always use the best available model. Fall back to freer models only on guardrail refusal.
+- **Robust over quick**, Never a hack. The system must be reliable enough to trust as your second brain.
+- **Yolo mode**, Larry runs with `--dangerously-skip-permissions`. No confirmation prompts.
+- **Nightly automation**, Scheduled tasks run overnight (Claude Haiku): vault hygiene, inbox triage, knowledge distillation. Darry (sleep-cycle daemon) runs in migration mode alongside the legacy batch runner.
 
 ---
 
