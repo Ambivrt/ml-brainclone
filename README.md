@@ -86,14 +86,14 @@ ml-brainclone/
 | **Milla** | Memory | Semantic search, knowledge graph, diary, palace traversal. Never forgets. | MemPalace MCP (ChromaDB, GPU) |
 | **Warry** | Emotion | Sentiment scoring, mood tracking, trend detection. Measures, never interprets. | XLM-RoBERTa (local GPU) |
 | **Parry** | Judgment | Privacy enforcement, tone control, quality gating. | Python daemon (parry_service.py) |
-| **Tarry** | Time | Reminders, follow-ups, recurring tasks, interrupted session recovery. | Python daemon (tarry_service.py) |
-| **Carry** | Logistics | Transport content in/out/between systems. Pipelines with retry. | Python daemon (carry_service.py) |
-| **Darry** | Sleep | Night shift 2.0: Light/Deep/REM sleep phases. Adaptive nightly processing. | Python daemon (darry_service.py) |
+| **Tarry** | Time | Reminders, follow-ups, recurring tasks, interrupted session recovery. | Brain runtime (tarry_brain.py, composes capabilities) |
+| **Carry** | Logistics | Transport content in/out/between systems. Pipelines with retry. | Brain runtime (carry_brain.py, composes capabilities) |
+| **Darry** | Sleep | Night shift 2.0: Light/Deep/REM sleep phases. Adaptive nightly processing. | Brain runtime (darry_brain.py, composes capabilities) |
 | **Scarry** | Conscience | Retroactive scanner. Finds procrastinated and forgotten tasks. Hooked into Darry deep sleep. | Python script (scheduled) |
 | **Karry** | Location | Spatial awareness. Position tracking, geo-fences, place intelligence, navigation. Hybrid daemon + MCP server. | Google Maps API + Nominatim |
 | **Farry** | Video | Video understanding, analysis, clip generation. Multimodal video reasoning. | Gemini Omni Flash (planned) |
 
-Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when needed. Daemons (Parry, Tarry, Carry, Darry, Karry) run in the background. All daemons managed via `daemon-manager.py` (unified start/stop/status/health). Scarry runs on schedule via Darry. Warry is invoked on demand. Farry is planned.
+Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when needed. Daemons (Parry, Tarry, Carry, Darry, Karry) run in the background. Each background agent runs as a Brain (a `*_brain.py` entrypoint that composes shared capabilities), brought up by a consolidated start script and kept alive by a heartbeat-aware watchdog. See ARCHITECTURE.md (Capability Composition). Parry stays a plain daemon (the bus gatekeeper). Scarry runs on schedule via Darry. Warry is invoked on demand. Farry is planned.
 
 ---
 

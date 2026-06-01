@@ -62,7 +62,7 @@ All agents handle all four privacy levels. All have access to the freedom router
 
 | Tool | Role |
 |------|------|
-| **daemon-manager.py** | Unified start/stop/status/health for all daemons (Parry, Tarry, Carry, Darry, bot-listener). Single CLI to manage entire ecosystem. Uses a daemon registry as the single source of truth for both start-all and stop-all. See [docs/daemon-stability.md](docs/daemon-stability.md). |
+| **Start script + watchdog** | A consolidated start script brings up every brain/daemon from one registry; a heartbeat-aware watchdog restarts any that die or hang (PID + heartbeat age). Background agents run as Brains (see Capability Composition below). See [docs/daemon-stability.md](docs/daemon-stability.md). |
 | **Brains Bus** | SQLite WAL event queue. All inter-agent communication. Parry sees everything. |
 | **FTS5 Index** | Full-text search across vault. BM25-ranked. Rebuilt automatically by Darry. |
 | **Feedback Loop** | Nightly audit: cross-references feedback memories vs. nattrapport violations. Generates prioritized Hot 10 injected at session init. See [docs/feedback-loop.md](docs/feedback-loop.md). |
@@ -118,7 +118,8 @@ Two patterns for extending the ecosystem:
 
 | Pattern | Examples | Process model | Restart |
 |---------|----------|--------------|---------|
-| **Daemon** | Parry, Tarry, Carry, Darry, Karry | Separate long-running Python process | Windows Task Scheduler / daemon-manager |
+| **Brain** | Tarry, Carry, Darry, Karry | Long-running process composing capabilities via the brain runtime (`*_brain.py`) | Start script / watchdog |
+| **Daemon** | Parry | Bus gatekeeper, long-running process | Start script / watchdog |
 | **Session** | Garry | Runs on demand, exits when done | Not needed, Larry invokes directly |
 | **Planned** | Farry | On-demand video processing, not yet active | Not needed, invoked by Larry |
 | **Scanner** | Scarry, Warry | CLI tool, scheduled or on-demand | Via Darry deep sleep or manual |
