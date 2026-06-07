@@ -135,6 +135,25 @@ candidate pairs (Milla embeddings, high similarity)
 
 Auto-resolved cases are logged but not escalated (acting on the obvious). Only genuine contradictions are surfaced to the user. Reconciliation only changes *what surfaces in context now*, never *what is stored* - identical to the KG `invalidate` + `as_of` model. A report is written to the inbox only when something changed or was flagged - never cry wolf about a clean state.
 
+### Usage-driven curation ("dreaming") - nightly only
+
+Conflict reconciliation curates on *content* (duplicates, contradictions). The dreaming layer adds the dimension content analysis cannot see: **which memories actually get used**. The name nods to Anthropic's Managed Agents "Dreaming" feature - a scheduled process that reviews sessions and curates memory on evidence - which this scaffold implements locally with two scripts and a prompt section.
+
+```
+Read tool call                      nightly, pre-collect before the memory batch
+    --> PostToolUse hook                --> memory_usage_curate.py (no LLM)
+        memory_usage_tracker.py             aggregates HOT / COLD / FRESH
+        appends .usage/usage.jsonl          rotates the log (90d)
+                                            writes a PRIVATE report
+                                                --> the LLM memory batch weighs it in
+```
+
+- **Tracker** (`scripts/memory_usage_tracker.py`): a `PostToolUse` hook on `Read`. Logs only files under the memory dir; always exits 0; swallows every error - a broken log must never block a Read. `MEMORY.md`/`USER.md` are excluded: they are harness-loaded at init, so logging them measures nothing.
+- **Curator** (`scripts/memory_usage_curate.py`): deterministic aggregation. HOT = read within 30 days. COLD = zero reads and older than a 30-day grace window (fresh files are never judged). The grace window matters: right after a bulk normalization every file looks new, so evidence has to accumulate before anything is classified cold.
+- **Synthesis** (the nightly memory batch prompt): HOT memories get their `MEMORY.md` one-liner sharpened; COLD memories get their *index line* moved to an archive section that is not loaded at init - the memory file itself is never touched and never deleted. Cap the moves (e.g. 5 per night) so one bad report cannot gut the index.
+
+**Privacy rule:** the report contains memory *file names*, and names can leak sensitive topics. Write it to a private, non-synced location - never the shared inbox - and let the nightly batch report only counts, not names, in anything public.
+
 ### Privacy classification
 
 Privacy cannot be guessed perfectly by machine. New memories default to `privacy: 2`; a keyword pass escalates to 3/4 for sensitive categories (NSFW terms, sensitive negotiations, personal finance, health, relationships). The gatekeeper agent reviews every escalation before it is written. The memory folder is gitignored regardless, so the `privacy` field drives retrieval and metadata consistency - the leak protection itself lives in gitignore + the gatekeeper.

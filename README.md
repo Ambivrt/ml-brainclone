@@ -34,6 +34,7 @@ ml-brainclone/
 │   ├── skills-system.md          <- Skills: discovery, frontmatter format, self-patch
 │   ├── system-taxonomy.md        <- system/* tag schema + SYSTEM-INDEX pattern (separate system from personal)
 │   ├── content-campaigns.md      <- Content campaign management: calendar + Tarry chains + morning brief
+│   ├── autonomous-loops.md       <- Self-prompting loops: deterministic judge + completion promise
 │   └── vault-ingest.md           <- Document conversion tool (MarkItDown)
 ├── templates/
 │   ├── daily.md                  <- Daily note template
