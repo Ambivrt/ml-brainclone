@@ -35,6 +35,7 @@ ml-brainclone/
 │   ├── system-taxonomy.md        <- system/* tag schema + SYSTEM-INDEX pattern (separate system from personal)
 │   ├── content-campaigns.md      <- Content campaign management: calendar + Tarry chains + morning brief
 │   ├── autonomous-loops.md       <- Self-prompting loops: deterministic judge + completion promise
+│   ├── multi-llm-gateway.md      <- Several model families behind one gate: secret scan, privacy policy, schema validation, cross-vendor review
 │   └── vault-ingest.md           <- Document conversion tool (MarkItDown)
 ├── templates/
 │   ├── daily.md                  <- Daily note template

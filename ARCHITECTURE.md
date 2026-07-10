@@ -257,6 +257,8 @@ You configure which models are *allowed* per privacy level. The router picks the
 
 See [docs/privacy-architecture.md](docs/privacy-architecture.md) for the full privacy model.
 
+In practice this is enforced as a **Multi-LLM Inference Gateway**: external model families (GPT via Codex CLI, Gemini via API) run as stateless specialists behind a shared gate — deterministic secret scan and privacy policy before every dispatch, JSON Schema validation of every response, cross-family fallback on technical failure, and family separation in review mode that blocks rather than silently degrades. Only the harness ever writes to the vault. See [docs/multi-llm-gateway.md](docs/multi-llm-gateway.md).
+
 ---
 
 ## Sync Architecture
