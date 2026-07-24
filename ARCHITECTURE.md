@@ -217,6 +217,12 @@ REQUEST
 
 Customize these to your preferences and available accounts.
 
+Which specific model each part of the system uses is decided by one config
+file rather than hardcoded at call sites. See
+[docs/model-tiering.md](docs/model-tiering.md) for that pattern, including
+how effort levels act as a tier dimension and why voice-sensitive surfaces
+need their own setting.
+
 ### Text mode
 
 | Priority | Model | Strength | Limitation |
@@ -257,7 +263,7 @@ You configure which models are *allowed* per privacy level. The router picks the
 
 See [docs/privacy-architecture.md](docs/privacy-architecture.md) for the full privacy model.
 
-In practice this is enforced as a **Multi-LLM Inference Gateway**: external model families (GPT via Codex CLI, Gemini via API) run as stateless specialists behind a shared gate — deterministic secret scan and privacy policy before every dispatch, JSON Schema validation of every response, cross-family fallback on technical failure, and family separation in review mode that blocks rather than silently degrades. Only the harness ever writes to the vault. See [docs/multi-llm-gateway.md](docs/multi-llm-gateway.md).
+In practice this is enforced as a **Multi-LLM Inference Gateway**: external model families (GPT via Codex CLI, Gemini via API) run as stateless specialists behind a shared gate: deterministic secret scan and privacy policy before every dispatch, JSON Schema validation of every response, cross-family fallback on technical failure, and family separation in review mode that blocks rather than silently degrades. Only the harness ever writes to the vault. See [docs/multi-llm-gateway.md](docs/multi-llm-gateway.md).
 
 ---
 

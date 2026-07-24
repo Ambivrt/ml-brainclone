@@ -205,9 +205,9 @@ Complement with question-word matching.
 
 | Situation | Model | Why |
 |-----------|-------|-----|
-| Default text conversation | `claude-sonnet-4-6` | Fast, cheap, good enough |
-| Complex question (long, references context) | `claude-sonnet-4-6` | Sufficient |
-| Creative / emotional / deep | `claude-opus-4-6` | Depth needed |
+| Default text conversation | `<mid-tier-model>` | Fast, cheap, good enough |
+| Complex question (long, references context) | `<mid-tier-model>` | Sufficient |
+| Creative / emotional / deep | `<top-tier-model>` | Depth needed |
 | Simple ack / short reply | `claude-haiku-4-5-20251001` | Fastest, cheapest |
 
 **Model selection logic:**
@@ -217,8 +217,8 @@ def _pick_model(text: str, sentiment: str) -> str:
     if words <= 3:
         return "claude-haiku-4-5-20251001"
     if sentiment in ("sad", "angry") or any(kw in text.lower() for kw in DEEP_KEYWORDS):
-        return "claude-opus-4-6"
-    return "claude-sonnet-4-6"
+        return "<top-tier-model>"
+    return "<mid-tier-model>"
 ```
 
 `DEEP_KEYWORDS` should be configured per deployment — topics that require deeper reasoning (creative writing, emotional support, complex analysis).
@@ -371,8 +371,8 @@ def _log_cost(model: str, input_tokens: int, output_tokens: int, cached_tokens: 
     """Log cost in a structured format."""
     # Prices per 1M tokens (update as pricing changes)
     prices = {
-        "claude-opus-4-6":          {"input": 15.0, "output": 75.0, "cached": 1.875},
-        "claude-sonnet-4-6":        {"input": 3.0,  "output": 15.0, "cached": 0.375},
+        "<top-tier-model>":  {"input": 15.0, "output": 75.0, "cached": 1.875},
+        "<mid-tier-model>":  {"input": 3.0,  "output": 15.0, "cached": 0.375},
         "claude-haiku-4-5-20251001": {"input": 0.80, "output": 4.0,  "cached": 0.08},
     }
     ...

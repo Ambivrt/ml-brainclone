@@ -14,7 +14,7 @@ ml-brainclone/
 ├── ARCHITECTURE.md               <- System design, tri-modal architecture, freedom router
 ├── SETUP.md                      <- Step-by-step installation guide
 ├── CLAUDE-template.md            <- Project instructions template (becomes CLAUDE.md)
-├── docs/
+├── docs/                          <- incl. model-tiering.md, output-lifecycle.md
 │   ├── architecture-overview.md  <- Agent architecture + data flows
 │   ├── larry-setup.md            <- Larry (Claude Code) configuration
 │   ├── barry-setup.md            <- Barry (image agent) setup
@@ -192,6 +192,8 @@ Throughout all files, replace these with your own values:
 | [docs/content-campaigns.md](docs/content-campaigns.md) | Content campaign management: calendar + Tarry chains + morning brief pipeline |
 | [docs/karry-setup.md](docs/karry-setup.md) | Karry location agent: position tracking, geo-fences, place intelligence |
 | [docs/farry-setup.md](docs/farry-setup.md) | Farry video agent: multimodal video reasoning |
+| [docs/model-tiering.md](docs/model-tiering.md) | One config file decides every model choice: intent-named resolvers, effort as a tier dimension, voice-sensitive levels |
+| [docs/output-lifecycle.md](docs/output-lifecycle.md) | Generated reports need an expiry, quality gates need to cover the surfaces you actually read |
 | [architecture/personalities/README.md](architecture/personalities/README.md) | Personality system: character sheets, switching rules, Parry middleware |
 | [architecture/telegram-v2-spec.md](architecture/telegram-v2-spec.md) | Platform adapter spec: multi-channel message routing (Telegram, CLI, email) |
 
