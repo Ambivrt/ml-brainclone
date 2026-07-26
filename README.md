@@ -33,6 +33,7 @@ ml-brainclone/
 │   ├── eval-smoketest.md         <- Regression-check pattern for model swaps + CLAUDE.md edits
 │   ├── skills-system.md          <- Skills: discovery, frontmatter format, self-patch
 │   ├── system-taxonomy.md        <- system/* tag schema + SYSTEM-INDEX pattern (separate system from personal)
+│   ├── vault-hygiene.md          <- One filename one file, inbox never archived, the sync trap
 │   ├── content-campaigns.md      <- Content campaign management: calendar + Tarry chains + morning brief
 │   ├── autonomous-loops.md       <- Self-prompting loops: deterministic judge + completion promise
 │   ├── multi-llm-gateway.md      <- Several model families behind one gate: secret scan, privacy policy, schema validation, cross-vendor review
@@ -55,6 +56,7 @@ ml-brainclone/
 │   ├── vault-ingest.py               <- Convert documents (PDF/DOCX/PPTX/XLSX) to vault Markdown
 │   ├── nightly-runner.sh             <- Nightly batch runner (PATH hardening, singleton kill, batch dispatch)
 │   ├── system_tag_batch.py           <- Path-based system/* tagging (idempotent), see docs/system-taxonomy.md
+│   ├── inbox_reaper.py               <- Deletes expired auto-reports from 00-inbox, see docs/vault-hygiene.md
 │   ├── parry-scheduled-task.xml      <- Windows Task Scheduler template for Parry autostart
 │   └── register-parry-task.ps1       <- One-shot registration script (run once at setup)
 ├── architecture/
@@ -183,6 +185,7 @@ Throughout all files, replace these with your own values:
 | [docs/mempalace-setup.md](docs/mempalace-setup.md) | MemPalace semantic memory + GPU acceleration |
 | [docs/memory-system.md](docs/memory-system.md) | How persistent memory works |
 | [docs/privacy-architecture.md](docs/privacy-architecture.md) | Privacy layers and enforcement |
+| [docs/vault-hygiene.md](docs/vault-hygiene.md) | Filename collisions, inbox lifecycle, sync traps, gitignore pitfalls |
 | [docs/logging-architecture.md](docs/logging-architecture.md) | Save-everything rule: transcript, audit, mail, event-bus |
 | [docs/daemon-stability.md](docs/daemon-stability.md) | Daemon stability patterns: start scripts, heartbeats, circuit breakers, singleton guards, resource locking, PATH hardening |
 | [docs/task-dispatch.md](docs/task-dispatch.md) | Inter-agent work queue: dispatch tasks from any channel (Telegram, mail, CLI) |

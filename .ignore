@@ -1,0 +1,22 @@
+# Local search must NOT be limited by .gitignore.
+#
+# .gitignore decides what syncs to the remote. That has nothing to do with what
+# should be searchable on the machine where the agent works. Most search tools
+# built on ripgrep honor .gitignore by default, which silently hides your
+# private folder from the agent's own search -- and the agent then reports that
+# nothing exists, confidently and wrongly.
+#
+# ripgrep reads .ignore at higher precedence than .gitignore, so the negations
+# below win. Applies to Claude Code's Grep tool, rg on the command line, and
+# anything else that respects .ignore.
+#
+# See docs/vault-hygiene.md.
+
+!_private/
+!memory/
+
+# What should actually stay out of search results -- noise, not secrets:
+.git/
+.obsidian/
+node_modules/
+.trash/

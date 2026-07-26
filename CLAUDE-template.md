@@ -72,6 +72,23 @@ Device: primary machine, `{{VAULT_PATH}}`. Synced via Git ({{GITHUB_REPO}}).
 - New → 00-inbox/. CLI: `obsidian search/create/daily/read`
 - Image generation = Barry (`python 03-projects/barry/barry.py`). Upscale only on request
 
+### One filename, one file
+
+**The same filename must never appear twice in the vault**, not even in different folders with different content. The filename alone should tell you what the file is.
+
+- **Date files get a type prefix:** `daily-YYYY-MM-DD.md`, `telegram-YYYY-MM-DD.md`, `diary-YYYY-MM-DD.md`. Never a bare date as a filename
+- **Exception: system files.** Structural slots like `CLAUDE.md`, `SKILL.md`, `README.md`, `character.md` and `prompts/text.md` per personality, `.gitkeep`. One fixed name per unit in a folder structure, not content
+- **Before creating a file:** check the name is free. Collision means make the name more specific, never create a variant elsewhere
+- **Never copies.** Moving something means moving it. If it belongs in two places, pick one and link from the other
+
+### The inbox is never archived
+
+`00-inbox/` is triaged and emptied. An archived inbox just means the triage never happened — finding `06-archive/inbox/` is a smell, not a feature.
+
+Inbox files have three exits: moved to a topic folder, deleted, or acted on and deleted. There is no fourth.
+
+Auto-generated content should be recognizable from the filename (`nightly-report-`, `distillate-`, `kg-updates-`, `morning-brief-`, `daily-`) and carry a `status` so the reaper can act on it. See `scripts/inbox_reaper.py` and `docs/vault-hygiene.md`.
+
 ## Agents & infrastructure (on-demand)
 
 Read relevant reference when needed:
