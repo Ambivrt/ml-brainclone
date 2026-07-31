@@ -38,10 +38,30 @@ available. Name collisions get a suffix rather than overwriting.
 **Dry-run by default.** Require an explicit flag to actually move anything.
 Run it dry the first time and read the list before trusting it.
 
-**Honor a frontmatter escape hatch.** `status: active` or `pinned: true`
+**Honor a frontmatter escape hatch, but pick the right field.** `pinned: true`
 protects a file even if it matches a pattern and exceeds the age limit. Parse
 only the frontmatter block for this, not the body, or a report that quotes
-`status: active` in its text will accidentally protect itself.
+`pinned: true` in its text will accidentally protect itself.
+
+Do not use `status: active` for this. It looks like the obvious choice and it
+fails in a specific way: the generator templates stamp everything they write
+as active, which makes every report immortal. Reports sat in the inbox for
+three months, correctly reported as protected by every run, and nobody read
+the line. Age has to win over status. The escape hatch must be a field only a
+human sets, never one a template fills in.
+
+There is one status worth honoring, and it is the opposite case: a file whose
+proposals have not been consumed yet. A knowledge-graph draft marked
+`kg-state: pending` becomes archivable only after the batch that applies it
+sets `applied`. Age is the wrong clock for that file, because archiving it
+early throws away proposals nobody ever saw.
+
+**Date the undated.** Report slots with fixed names (`nightly-orphans.md`,
+`nightly-triage.md`) are overwritten every run, which is correct while they
+sit in the inbox: you only ever want the latest. It stops being correct at the
+archive boundary, where every month's copy claims the same filename. Add the
+run date to the name when archiving, or the archive collapses into
+`-2`, `-3` suffixes that carry no information about which night produced what.
 
 Run it before the analysis batches, not after. Triage should read current
 material, not archive.
@@ -97,3 +117,4 @@ is not a quality mechanism, it is a log line.
 - [feedback-loop.md](feedback-loop.md) for capturing corrections
 - [eval-smoketest.md](eval-smoketest.md) for the output gate itself
 - [vault-ingest.md](vault-ingest.md) for what enters the vault
+- [privacy-architecture.md](privacy-architecture.md) for which folders a generator may read in the first place

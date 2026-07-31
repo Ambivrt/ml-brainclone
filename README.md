@@ -184,7 +184,7 @@ Throughout all files, replace these with your own values:
 | [docs/garry-setup.md](docs/garry-setup.md) | Garry (spatial agent) setup: Trellis 2, rembg, Blender |
 | [docs/mempalace-setup.md](docs/mempalace-setup.md) | MemPalace semantic memory + GPU acceleration |
 | [docs/memory-system.md](docs/memory-system.md) | How persistent memory works |
-| [docs/privacy-architecture.md](docs/privacy-architecture.md) | Privacy layers and enforcement |
+| [docs/privacy-architecture.md](docs/privacy-architecture.md) | Privacy layers and enforcement, including the read side: which folders a generator may scan |
 | [docs/vault-hygiene.md](docs/vault-hygiene.md) | Filename collisions, inbox lifecycle, sync traps, gitignore pitfalls |
 | [docs/logging-architecture.md](docs/logging-architecture.md) | Save-everything rule: transcript, audit, mail, event-bus |
 | [docs/daemon-stability.md](docs/daemon-stability.md) | Daemon stability patterns: start scripts, heartbeats that prove responsiveness, client-side timeouts, circuit breakers, singleton guards, resource locking, PATH hardening |

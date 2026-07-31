@@ -182,12 +182,62 @@ Detected keys should be rotated immediately.
 
 ## Nightly Automation and Privacy
 
-The nightly batch jobs (running on Haiku) operate with these hard rules:
+The nightly batch jobs operate with these hard rules:
 - Write ONLY to `00-inbox/`
 - NEVER write to `_private/`
 - Never delete, never modify existing files
-- Exclude L3-4 content from monitoring
+- Never READ `_private/` (see below)
 - NEVER wikilink to privacy 3-4 from generated reports
+
+---
+
+## Privacy on the read side
+
+The wikilink rule protects references. It does nothing about content.
+
+A tool that reads across all four levels and writes its result to one fixed
+level leaks upward, and no rule above catches it. Nothing is linked, so the
+link checker is silent. The output file declares its own privacy level in
+frontmatter, so the privacy audit reads it as compliant. The violation is
+invisible to both gates.
+
+A fact extractor is the clearest example. It walks the vault for changed
+files, sends each one to a model for subject-predicate-object extraction, and
+writes the proposals to a markdown file with a hardcoded `privacy: 1` header
+in the inbox. The inbox is tracked in git. Three nights of diary entries,
+weight and heart-rate data, and family travel dates were copied out of
+`_private/` into a public-tier file and pushed. The repository was private, so
+nothing left the account, but L3 content had moved into a layer meant to hold
+L1 and L2 only.
+
+Two rules, in order of preference:
+
+**Exclude the private layer from the scan.** A skip list on directory names,
+checked against every path component, not just the prefix. This is the right
+default for anything whose output lands in a tracked folder.
+
+```python
+SKIP_DIRS = {".git", ".obsidian", ".trash", "node_modules", "_private", "00-inbox"}
+
+for path in VAULT.rglob("*.md"):
+    if any(part in SKIP_DIRS for part in path.parts):
+        continue
+```
+
+**Or make the output inherit the maximum privacy of its sources.** If a tool
+genuinely needs to read across levels, the file it writes takes the highest
+level it touched, and lands in `_private/` accordingly. Never a fixed level
+decided at write time.
+
+The same skip list should exclude the tool's own output directory. An
+extractor that reads the inbox will find last night's reports and propose
+facts about the vault's own metrics back into the knowledge graph, where the
+vault is already the source of truth. See
+[output-lifecycle.md](output-lifecycle.md) for the general shape of that
+failure.
+
+Lock both exclusions with tests. The test that matters is not that the right
+files are found, it is that the private ones are absent from the result.
 
 ---
 
