@@ -187,7 +187,7 @@ Throughout all files, replace these with your own values:
 | [docs/privacy-architecture.md](docs/privacy-architecture.md) | Privacy layers and enforcement |
 | [docs/vault-hygiene.md](docs/vault-hygiene.md) | Filename collisions, inbox lifecycle, sync traps, gitignore pitfalls |
 | [docs/logging-architecture.md](docs/logging-architecture.md) | Save-everything rule: transcript, audit, mail, event-bus |
-| [docs/daemon-stability.md](docs/daemon-stability.md) | Daemon stability patterns: start scripts, heartbeats, circuit breakers, singleton guards, resource locking, PATH hardening |
+| [docs/daemon-stability.md](docs/daemon-stability.md) | Daemon stability patterns: start scripts, heartbeats that prove responsiveness, client-side timeouts, circuit breakers, singleton guards, resource locking, PATH hardening |
 | [docs/task-dispatch.md](docs/task-dispatch.md) | Inter-agent work queue: dispatch tasks from any channel (Telegram, mail, CLI) |
 | [docs/proactivity.md](docs/proactivity.md) | Larry acts, doesn't just report: init-scanner + bus dispatcher + nightly triggers |
 | [docs/agent-capabilities.md](docs/agent-capabilities.md) | Capability matrix for all agents: tools, skill domains, ecosystem flow |

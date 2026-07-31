@@ -275,7 +275,29 @@ fi
 timeout 300 python -m my_indexer mine "$VAULT" || echo "Indexing failed (continuing)"
 ```
 
-**Key insight:** The singleton pattern (#8) and this pattern work together. The singleton prevents accidental concurrent access during normal operation. But batch jobs that need exclusive access must deliberately kill the singleton first. Both patterns are necessary — neither alone is sufficient.
+**Prefer a control channel over a kill.** `kill` skips whatever flush the singleton owes its database. For an HNSW vector index that means the on-disk index can diverge from its metadata store, after which vector search silently degrades to keyword fallback and nothing logs an error. Give the singleton a control message it obeys only when it runs headless, and fall back to the hard kill only when it does not answer:
+
+```python
+# In the singleton's connection handler, BEFORE the request lock.
+# Checking it ahead of the lock is what makes shutdown reachable while a
+# hung request holds the lock -- which is exactly when you need it.
+if request.get("control") == "shutdown":
+    if headless:
+        wfile.write(json.dumps({"ok": True}) + "\n"); wfile.flush()
+        shutdown.set()
+        return
+    # A session-owned singleton refuses; its owner decides its lifetime.
+    wfile.write(json.dumps({"ok": False, "error": "session-owned"}) + "\n")
+```
+
+```bash
+python shutdown_singleton.py          # 0 = down, 2 = refused, 3 = no response
+if [ $? -ne 0 ]; then
+    kill $SINGLETON_PIDS 2>/dev/null || true    # fallback only
+fi
+```
+
+**Key insight:** The singleton pattern (#8) and this pattern work together. The singleton prevents accidental concurrent access during normal operation. But batch jobs that need exclusive access must deliberately shut the singleton down first. Both patterns are necessary, neither alone is sufficient.
 
 **Real-world scenario:** A nightly indexer (mempalace mine) needs exclusive access to ChromaDB. The MCP singleton proxy holds the HNSW index open. Without killing the singleton first, the indexer deadlocks. The batch runner's 30-minute timeout kills the process, and all subsequent batches that depend on updated indexes produce no output. The failure is completely silent — no error in the log, just missing output files.
 
@@ -303,6 +325,8 @@ export PYTHONIOENCODING=utf-8
 ---
 
 ### 11. Consistent Heartbeat Format
+
+> Format is the easy half. What the heartbeat is allowed to *mean* is the hard half -- see #17 before wiring a health check to any of this.
 
 **Problem:** If some daemons write heartbeat files as JSON (`{"ts": "...", "state": "..."}`) and others write plaintext ISO8601 timestamps, every health checker must handle both formats. This adds complexity and creates parsing bugs.
 
@@ -514,11 +538,16 @@ Integrate into your start-all script so it launches automatically:
 Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File watchdog.ps1" -WindowStyle Hidden
 ```
 
+A PID check alone only catches daemons that died. Daemons that hang keep their PID, their port, and their file handles -- so the watchdog must also judge heartbeat age, and the heartbeat must be worth judging (#17).
+
 **Key design decisions:**
 - Uses the same daemon registry as start-all/stop-all (pattern #4)
 - Writes its own PID file so start-all can detect if it's already running
 - Logs every restart to `watchdog.log` for audit
 - Does NOT restart itself — the OS Task Scheduler or start-all handles watchdog crashes
+- Max heartbeat age is per daemon, not one global constant (#17)
+- Daemons holding unflushed state are shut down through their control channel before any hard kill (#9)
+- Honors a maintenance flag so planned exclusive-access jobs are not fought by an eager restart; cap the flag's age so a crashed batch job cannot disable recovery forever
 
 See `scripts/watchdog.ps1` for the reference implementation.
 
@@ -587,6 +616,130 @@ foreach ($d in $daemons) {
 
 ---
 
+### 17. Heartbeats Must Prove Responsiveness, Not Liveness
+
+**Problem:** A heartbeat written by a dedicated thread proves one thing: that thread is scheduled. It says nothing about whether the daemon can still do its job. A server that accepts TCP connections but never answers them keeps writing a perfectly fresh heartbeat while every caller hangs. The watchdog (#14) sees a healthy daemon and never restarts it. This is worse than no heartbeat at all, because it actively suppresses recovery.
+
+This failure mode is common in daemons that serialize work behind a lock: a request that never returns holds the lock forever, every subsequent request queues behind it, and the heartbeat thread -- which touches neither the lock nor the work -- keeps ticking.
+
+**Fix:** The heartbeat must be the *result* of a completed round trip, not a timer. Have the daemon call itself through the same path a real client uses -- socket, accept loop, handler thread, lock, business logic -- and write the heartbeat file only when a response comes back.
+
+```python
+PROBE_INTERVAL = 30
+PROBE_TIMEOUT = 60
+PROBE_ID = "self-probe"
+
+def probe_once(timeout):
+    """Call ourselves over the wire. Returns (ok, rtt, detail)."""
+    req = {"jsonrpc": "2.0", "id": PROBE_ID, "method": "<cheap real method>"}
+    t0 = time.monotonic()
+    sock = None
+    try:
+        sock = socket.create_connection(("127.0.0.1", PORT), timeout=timeout)
+        sock.settimeout(timeout)          # the probe must never hang either
+        sock.makefile("w").write(json.dumps(req) + "\n")
+        line = sock.makefile("r").readline()
+        if not line:
+            return False, time.monotonic() - t0, "closed without answering"
+        resp = json.loads(line)
+        return resp.get("id") == PROBE_ID, time.monotonic() - t0, "ok"
+    except (socket.timeout, TimeoutError):
+        return False, time.monotonic() - t0, f"no answer within {timeout}s"
+    except (OSError, json.JSONDecodeError) as e:
+        return False, time.monotonic() - t0, str(e)
+    finally:
+        if sock:
+            sock.close()
+
+def heartbeat_loop(stop_event):
+    write_heartbeat("probe=startup")      # grace while the daemon warms up
+    while not stop_event.wait(PROBE_INTERVAL):
+        ok, rtt, detail = probe_once(PROBE_TIMEOUT)
+        if ok:
+            write_heartbeat(f"probe=ok rtt={rtt:.2f}s")
+        else:
+            log.error("self-probe FAILED: %s -- withholding heartbeat", detail)
+            # No write. The file ages out and the watchdog takes over.
+```
+
+**Count an error response as alive.** What the probe measures is responsiveness, not correctness. If a valid error reply is treated as failure, an empty database or a degraded-but-working backend puts the watchdog into a restart loop -- and restart loops during degradation are how a recoverable problem becomes an outage. A server that answers "I cannot do that" is a server that is answering.
+
+**Set the watchdog's max-age per daemon, not globally.** A heartbeat that costs a round trip deserves a tighter bound than one written blindly. Six missed probes is a silent server; ten minutes of generic grace is a wasted outage.
+
+```powershell
+@{
+    Name     = "mcp-server"
+    Port     = 18923
+    HbMaxAge = 180          # probe runs every 30s -- 180s = six missed proofs
+    GracefulStop = $true    # see #9: flush before you kill
+}
+```
+
+**Rule:** A heartbeat answers "can you still serve?", not "is a thread running?". If it cannot fail, it is not a health check.
+
+---
+
+### 18. Every Proxy Needs a Client-Side Timeout
+
+**Problem:** A proxy that forwards lines between a client and a backend usually blocks forever on read -- `settimeout(None)` is the default after connect, and it feels correct because the backend "always" answers. When the backend stops answering, the client has no way to find out. It waits until whatever outer limit exists finally fires. A 30-minute tool timeout is not a timeout; it is a session that dies quietly.
+
+Restarting the backend does not help. The client's channel is still bound to the dead process, so every call after the restart hangs exactly like the ones before it.
+
+**Fix:** Track in-flight request IDs in the proxy. When one exceeds the timeout, answer the client yourself with a protocol-level error, tear down the connection, and reconnect. Three details make this correct:
+
+1. **Never register notifications.** Messages without an ID get no response by design; booking them as outstanding guarantees a false timeout.
+2. **Drop late replies for abandoned IDs.** If the backend answers after you already replied, forwarding it sends the client two responses for one request.
+3. **Answer everything still in flight when the socket dies**, not just what timed out. Otherwise a broken connection leaves calls hanging with nobody left to answer them.
+
+```python
+CLIENT_TIMEOUT = 120
+
+pending = {}       # request-id -> monotonic timestamp
+abandoned = set()  # answered locally; drop the backend's late reply
+
+def note_request(raw):
+    msg = json.loads(raw)
+    if "method" not in msg or msg.get("id") is None:
+        return                       # notification -- never gets a reply
+    with state_lock:
+        pending[msg["id"]] = time.monotonic()
+
+def note_response(raw):
+    """Returns False if the line should be dropped."""
+    msg = json.loads(raw)
+    rid = msg.get("id")
+    with state_lock:
+        pending.pop(rid, None)
+        if rid in abandoned:
+            abandoned.discard(rid)
+            return False
+    return True
+
+def timeout_guard(sock):
+    while not stop.wait(1.0):
+        now = time.monotonic()
+        with state_lock:
+            expired = [r for r, t in pending.items() if now - t > CLIENT_TIMEOUT]
+            for r in expired:
+                del pending[r]
+                abandoned.add(r)
+        for rid in expired:
+            emit({"jsonrpc": "2.0", "id": rid,
+                  "error": {"code": -32001,
+                            "message": f"backend did not answer within {CLIENT_TIMEOUT}s"}})
+        if expired:
+            sock.shutdown(socket.SHUT_RDWR)   # force reconnect on the next call
+            return
+```
+
+Keep the outer limit too, set slightly above the proxy's own, so the proxy's clean error wins and the outer one only catches the proxy itself failing.
+
+**Testing this is easy and worth it.** Stand up a fake backend that accepts connections and answers nothing, run the real proxy against it as a subprocess, and assert that an error comes back within seconds. That test fails loudly on any regression that reintroduces the hang.
+
+**Rule:** Any blocking call across a process boundary needs a deadline. "It always answers" is an assumption, not a property.
+
+---
+
 ## Checklist for Adding a New Daemon
 
 1. Add to `daemon_registry.py` (or equivalent central list)
@@ -599,8 +752,11 @@ foreach ($d in $daemons) {
 8. Implement circuit breaker with notification (if applicable)
 9. Use `RotatingFileHandler` for logging (not stdout redirect)
 10. Write heartbeats in JSON format to the standard heartbeat directory
-11. Register in Windows Task Scheduler for autostart (AtLogon trigger)
-12. Add to Darry's Light Sleep heartbeat check list
+11. Make the heartbeat conditional on a completed self-probe, and set the daemon's own max-age in the watchdog registry (#17)
+12. If the daemon serves other processes, give the client side a timeout and a reconnect path (#18)
+13. If the daemon holds unflushed state, add a control-channel shutdown and use it before any kill (#9)
+14. Register in Windows Task Scheduler for autostart (AtLogon trigger)
+15. Add to Darry's Light Sleep heartbeat check list
 
 ---
 

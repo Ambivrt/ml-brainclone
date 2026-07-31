@@ -444,7 +444,7 @@ The key upgrade: conditional execution. The old batch runner does everything eve
 
 Running both systems simultaneously revealed several patterns:
 
-1. **Singleton kill before indexing.** The nightly batch runner must kill the MCP singleton before running `mempalace mine`, because the singleton holds ChromaDB's HNSW index open. Without this, the indexer deadlocks and the batch runner's timeout kills everything silently. Darry handles this internally. See [daemon-stability.md](daemon-stability.md) pattern #9.
+1. **Singleton shutdown before indexing.** The nightly batch runner must shut down the MCP singleton before running `mempalace mine`, because the singleton holds ChromaDB's HNSW index open. Without this, the indexer deadlocks and the batch runner's timeout kills everything silently. Use the singleton's control channel and fall back to a kill only if it does not answer -- a hard kill skips the HNSW flush and can diverge the index. Set a maintenance flag first so the watchdog does not restart the primary mid-run. Darry handles this internally. See [daemon-stability.md](daemon-stability.md) pattern #9.
 
 2. **PATH hardening on Windows.** When Task Scheduler runs bash scripts, the WSL shim in `WindowsApps` can intercept `bash` calls. The batch runner's PATH must explicitly prepend Git Bash and exclude WindowsApps. See [daemon-stability.md](daemon-stability.md) pattern #10.
 

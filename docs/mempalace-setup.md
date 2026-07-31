@@ -595,16 +595,25 @@ Configure in `.mcp.json`:
 }
 ```
 
-**Critical interaction with batch jobs:** The singleton holds ChromaDB's HNSW index open. Nightly batch jobs that need exclusive database access (e.g., `mempalace mine`) must kill the singleton first. The singleton restarts automatically on the next MCP call. See [daemon-stability.md](daemon-stability.md) pattern #9.
+**The secondary needs a timeout.** After `create_connection` the socket blocks forever by default, which is comfortable right up until the primary stops answering -- then every session hangs until whatever outer tool timeout finally fires, and restarting the primary does not help because the session's channel is still bound to the dead process. Track outstanding request IDs in the proxy, answer the client with a JSON-RPC error when one ages out, and drop the connection so the next call reaches a fresh primary. Full pattern with the three correctness details: [daemon-stability.md](daemon-stability.md) pattern #18.
+
+**Run the primary as a supervised daemon, not as a side effect of the first session.** When the primary is whichever session happened to start first, it dies with that session, and its heartbeat belongs to nobody. A headless primary (`--primary-daemon`) owns the port, writes a PID and a heartbeat, and lets the watchdog restart it. That heartbeat must be earned by a real self-probe, not written by a timer -- a primary that accepts TCP and answers nothing is the exact failure this setup produces. See [daemon-stability.md](daemon-stability.md) pattern #17.
+
+**Critical interaction with batch jobs:** The singleton holds ChromaDB's HNSW index open. Nightly batch jobs that need exclusive database access (e.g., `mempalace mine`) must shut the singleton down first. Prefer its control channel: a hard kill skips the HNSW flush and can leave the index diverged from `chroma.sqlite3`, after which vector search silently falls back to keyword matching. See [daemon-stability.md](daemon-stability.md) pattern #9.
 
 ```bash
-# In batch runner: kill singleton before mine
-SINGLETON_PIDS=$(pgrep -f "mempalace-singleton" 2>/dev/null || true)
-if [ -n "$SINGLETON_PIDS" ]; then
-    echo "$SINGLETON_PIDS" | xargs kill 2>/dev/null || true
+# In batch runner: graceful shutdown first, kill only as fallback
+if ! python bus/milla_shutdown.py; then
+    SINGLETON_PIDS=$(pgrep -f "mempalace-singleton" 2>/dev/null || true)
+    [ -n "$SINGLETON_PIDS" ] && echo "$SINGLETON_PIDS" | xargs kill 2>/dev/null || true
     sleep 2
 fi
-timeout 300 python -m mempalace mine "$VAULT"
+
+# Set a maintenance flag so the watchdog does not restart the primary mid-mine
+# (two PersistentClients on one palace is the corruption the singleton prevents).
+touch "$NOTIF_DIR/milla-maintenance.flag"
+timeout 900 python -m mempalace mine "$VAULT"
+rm -f "$NOTIF_DIR/milla-maintenance.flag"
 ```
 
 ### Post-Rebuild Verification
