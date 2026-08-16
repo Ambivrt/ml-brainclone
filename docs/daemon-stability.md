@@ -555,6 +555,8 @@ See `scripts/watchdog.ps1` for the reference implementation.
 
 ### 15. Protect Daemons from Accidental Mass-Kill
 
+> **Note:** In practice, the singleton + watchdog + circuit breaker stack (see "Runtime Integration" below) handles most of this. The hook approach below works but generates false positives on legitimate commands that mention daemon names (e.g., `git diff larry-stop.ps1`). Consider whether your runtime defenses are sufficient before adding command interception.
+
 **Problem:** The AI agent (or a careless script) can run `taskkill /IM pythonw.exe` or `Stop-Process -Name python` and kill every daemon at once. If the user is remote, nothing restarts until they return.
 
 **Fix:** Add a PreToolUse hook that intercepts shell commands and blocks patterns that would mass-kill daemons:
@@ -757,6 +759,118 @@ Keep the outer limit too, set slightly above the proxy's own, so the proxy's cle
 13. If the daemon holds unflushed state, add a control-channel shutdown and use it before any kill (#9)
 14. Register in Windows Task Scheduler for autostart (AtLogon trigger)
 15. Add to Darry's Light Sleep heartbeat check list
+
+---
+
+## Runtime Integration: How the Patterns Compose
+
+The patterns above are taught individually but deployed together. Here is how the running system wires them into three layers of protection against process explosion and silent death.
+
+### Layer 1: Daemon Singleton (file lock + PID)
+
+Every daemon acquires an exclusive file lock at startup via a shared `daemon_singleton.py` module. This is stricter than the PID-check singleton in #8: a file lock is released by the OS when the process dies, so stale PID files cannot fool it.
+
+```python
+# daemon_singleton.py (simplified)
+import fcntl, os, sys
+from pathlib import Path
+
+class DaemonSingleton:
+    def __init__(self, name: str, notif_dir: Path):
+        self.lock_path = notif_dir / f"{name}.lock"
+        self.pid_path  = notif_dir / f"{name}.pid"
+        self._fd = None
+
+    def acquire(self):
+        self._fd = open(self.lock_path, "w")
+        try:
+            fcntl.flock(self._fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print(f"[{self.lock_path.stem}] already running -- exiting")
+            sys.exit(0)
+        self.pid_path.write_text(str(os.getpid()))
+
+    def release(self):
+        self.pid_path.unlink(missing_ok=True)
+        if self._fd:
+            self._fd.close()
+```
+
+On Windows, replace `fcntl.flock` with `msvcrt.locking`. The principle is the same: the OS guarantees mutual exclusion, not your code.
+
+### Layer 2: Watchdog Circuit Breaker
+
+The watchdog (#14) tracks consecutive restart failures per daemon. After a configurable number of failures (default: 3) it writes a `.circuit-broken` flag file and stops trying. This prevents restart storms where a daemon with a persistent error (missing dependency, corrupt state) consumes all watchdog cycles.
+
+```
+notifications/
+    tarry.circuit-broken     <-- watchdog stops retrying tarry
+    tarry.pid                <-- stale, process is dead
+```
+
+The start script (`larry-start.ps1`) clears all `.circuit-broken` flags on a full restart, so a manual restart always resets the breaker.
+
+### Layer 3: Per-Daemon Disable
+
+A `.disabled` flag file tells the watchdog to skip a daemon entirely. Useful for planned maintenance, debugging, or temporarily removing a daemon from the stack without editing the registry.
+
+```powershell
+# Disable vibesensor -- watchdog will ignore it
+"" | Out-File notifications\vibesensor.disabled
+
+# Re-enable (or run larry-start.ps1 which clears all flags)
+Remove-Item notifications\vibesensor.disabled
+```
+
+### How the layers interact
+
+```
+Daemon starts
+    |
+    v
+Singleton lock acquired?
+    |            |
+   YES          NO --> exit immediately (another instance holds the lock)
+    |
+    v
+Daemon runs, writes heartbeats
+    |
+    v
+Daemon dies (crash, OOM, unhandled exception)
+    |
+    v
+OS releases file lock automatically
+    |
+    v
+Watchdog detects missing heartbeat or dead PID
+    |
+    v
+Is .disabled set? --> YES --> skip, log, move on
+    |
+    NO
+    |
+    v
+Is .circuit-broken set? --> YES --> skip, log, move on
+    |
+    NO
+    |
+    v
+Restart daemon
+    |
+    v
+Did it survive the liveness check?
+    |            |
+   YES          NO --> increment failure counter
+    |                    |
+    v                    v
+  Reset counter     counter >= 3? --> write .circuit-broken, notify
+```
+
+This three-layer defense means:
+- **No duplicate processes** (singleton lock)
+- **No restart storms** (circuit breaker)
+- **No fighting planned maintenance** (disable flag)
+- **Full reset on manual restart** (start script clears all flags)
 
 ---
 

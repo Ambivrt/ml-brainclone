@@ -63,6 +63,9 @@ All agents handle all four privacy levels. All have access to the freedom router
 | Tool | Role |
 |------|------|
 | **Start script + watchdog** | A consolidated start script brings up every brain/daemon from one registry; a heartbeat-aware watchdog restarts any that die or hang (PID + heartbeat age). Background agents run as Brains (see Capability Composition below). See [docs/daemon-stability.md](docs/daemon-stability.md). |
+| **Daemon singleton** | File-lock + PID guard (`daemon_singleton.py`) prevents duplicate processes. Every daemon and app acquires a lock at startup; a second instance exits immediately. |
+| **Circuit breaker** | Watchdog tracks consecutive restart failures per daemon. After 3 failures it writes a `.circuit-broken` flag and stops retrying. Manual intervention or `larry-start.ps1` (which clears all flags) resets the breaker. |
+| **Per-daemon disable** | A `.disabled` flag file causes the watchdog to skip a daemon entirely. Useful for maintenance or debugging without stopping the whole stack. Cleared automatically by the start script. |
 | **Brains Bus** | SQLite WAL event queue. All inter-agent communication. Parry sees everything. |
 | **FTS5 Index** | Full-text search across vault. BM25-ranked. Rebuilt automatically by Darry. |
 | **Feedback Loop** | Nightly audit: cross-references feedback memories vs. nattrapport violations. Generates prioritized Hot 10 injected at session init. See [docs/feedback-loop.md](docs/feedback-loop.md). |
@@ -118,11 +121,11 @@ Two patterns for extending the ecosystem:
 
 | Pattern | Examples | Process model | Restart |
 |---------|----------|--------------|---------|
-| **Brain** | Tarry, Carry, Darry, Karry | Long-running process composing capabilities via the brain runtime (`*_brain.py`) | Start script / watchdog |
-| **Daemon** | Parry | Bus gatekeeper, long-running process | Start script / watchdog |
+| **Brain** | Tarry, Carry, Darry, Karry, Warry | Long-running process composing capabilities via the brain runtime (`*_brain.py`) | Start script / watchdog |
+| **Daemon** | Parry, Screen-bus | Bus gatekeeper / screen interaction relay, long-running process | Start script / watchdog |
 | **Session** | Garry | Runs on demand, exits when done | Not needed, Larry invokes directly |
 | **Planned** | Farry | On-demand video processing, not yet active | Not needed, invoked by Larry |
-| **Scanner** | Scarry, Warry | CLI tool, scheduled or on-demand | Via Darry deep sleep or manual |
+| **Scanner** | Scarry | CLI tool, scheduled or on-demand | Via Darry deep sleep or manual |
 
 Daemons are appropriate for background work that must happen independently of Larry's attention (gating, scheduling). Skills are appropriate for capabilities Larry invokes on demand.
 
@@ -411,7 +414,8 @@ Apps emerge when you notice yourself doing the same multi-step task repeatedly a
 | **Barry** | Image generation | Larry | Venice (Playwright) | On-demand subprocess |
 | **Harry** | Audio / TTS | Larry | Vertex AI / Whisper | On-demand subprocess |
 | **Milla** | Semantic memory | All agents (via MCP) | ChromaDB | Persistent HTTP/SSE server |
-| **Warry** | Sentiment analysis | Larry / Telegram listener | XLM-RoBERTa (GPU) | On-demand (lazy-load) |
+| **Warry** | Sentiment analysis | Larry / Telegram listener | XLM-RoBERTa (GPU) | Background daemon |
+| **Screen-bus** | Screen interaction relay | Larry / external events | Brains-bus | Background daemon |
 | **Parry** | Privacy gatekeeper | Always-on middleware | Larry (flags) | Background daemon |
 | **Tarry** | Time / scheduling | Larry (queue write) | Larry (fires reminders) | Background daemon |
 | **Carry** | Content logistics | Larry / Darry / events | Filesystem, APIs, Playwright | Background daemon |
