@@ -1,25 +1,58 @@
-# Garry Setup — Spatial Brain (Image-to-3D)
+# Garry Setup — Spatial Brain (3D, Game Engine, Image-to-3D)
 
-Garry is Larry's spatial agent. Converts images to 3D meshes (GLB) via Trellis 2, with automatic background removal (rembg) and Blender import.
+Garry is Larry's spatial agent. Controls Unity Editor via CLI + MCP (150+ tools), converts images to 3D meshes (GLB) via Trellis 2, and handles Blender workflows via MCP.
 
 ---
 
 ## Quick Start
 
+### Unity (Game Engine)
+
+```bash
+# Install Unity CLI (comes with Unity Hub)
+unity --version
+
+# Install Pipeline package in Unity project
+unity pipeline install --project-path "/path/to/project"
+
+# Configure MCP for Claude Code
+unity mcp configure claude-code --project-path "/path/to/project"
+
+# Verify Pipeline is running (Unity Editor must be open)
+unity pipeline list
+
+# Check editor status via MCP
+# → 150+ tools available: scene hierarchy, components, build, test, scripting
+```
+
+### Image-to-3D
+
 ```bash
 # Convert image to 3D mesh
-python 03-projects/ml-brainclone/agents/garry_service.py generate "path/to/image.png"
+python agents/garry_service.py generate "path/to/image.png"
 
 # With custom output directory
-python 03-projects/ml-brainclone/agents/garry_service.py generate "image.png" --output "path/to/output/"
+python agents/garry_service.py generate "image.png" --output "path/to/output/"
 
 # Check status
-python 03-projects/ml-brainclone/agents/garry_service.py status
+python agents/garry_service.py status
 ```
 
 ---
 
 ## Architecture
+
+### Unity Pipeline
+
+```
+User → Larry → Garry (Claude Code with unity-editor-mcp)
+  → Unity CLI manages editor lifecycle
+  → Pipeline package (com.unity.pipeline) runs TCP server on port 7800
+  → MCP exposes 150+ tools: scene, hierarchy, components, build, test, scripting
+  → Claude Code controls Unity Editor programmatically
+```
+
+### Image-to-3D Pipeline
 
 ```
 User → Larry → garry_service.py (CLI)
@@ -53,9 +86,11 @@ User → Larry → garry_service.py (CLI)
 
 | Component | Required? | Notes |
 |-----------|-----------|-------|
+| **Unity 6+ (Hub)** | For game dev | Unity CLI (`unity` v1.0.0-beta.6+) ships with Hub |
+| **com.unity.pipeline** | For Unity MCP | `unity pipeline install` adds it to project |
 | **Python 3.10+** | Yes | Runtime |
-| **rembg** | Yes | Background removal (`pip install rembg[gpu]` for CUDA) |
-| **Trellis 2** | Yes | Image-to-3D model (via HuggingFace or fal.ai API) |
+| **rembg** | For image-to-3D | Background removal (`pip install rembg[gpu]` for CUDA) |
+| **Trellis 2** | For image-to-3D | Image-to-3D model (via HuggingFace or fal.ai API) |
 | **Blender 4.0+** | Optional | For import, rigging, and scene assembly |
 | **NVIDIA GPU (CUDA)** | Recommended | Accelerates rembg and local Trellis inference |
 | **fal.ai API key** | Optional | For cloud-based Trellis inference (alternative to local) |
@@ -82,6 +117,38 @@ pip install fal-client
 # Option 2: Local (requires ~8GB VRAM)
 # Follow Trellis 2 repo instructions: https://github.com/microsoft/TRELLIS
 ```
+
+### Unity CLI + MCP
+
+Unity CLI ships with Unity Hub. The MCP bridge requires the Pipeline package inside the Unity project:
+
+```bash
+# 1. Verify Unity CLI
+unity --version
+
+# 2. Install Pipeline package
+unity pipeline install --project-path "/path/to/unity-project"
+
+# 3. Configure Claude Code MCP
+unity mcp configure claude-code --project-path "/path/to/unity-project" --yes
+# This writes unity-editor-mcp to ~/.claude.json
+
+# 4. Open Unity Editor (Pipeline server starts automatically on port 7800)
+unity editor open --project-path "/path/to/unity-project"
+
+# 5. Verify MCP tools (should show 150+ tools)
+unity pipeline list
+```
+
+**Key MCP tool categories:**
+- Scene: `get_scene_hierarchy`, `open_scene`, `create_gameobject`, `set_transform`
+- Components: `add_component`, `set_component_properties`, `get_serialized_fields`
+- Build: `build`, `build_status`, `switch_build_target`
+- Test: `run_tests`, `test_status`, `list_tests`
+- Scripting: `create_script`, `eval`, `eval_file`, `recompile`
+- Assets: `find_assets`, `create_asset`, `import_asset`
+- Console: `console`, `get_console_logs`, `clear_console`
+- Capture: `capture_scene_view`, `capture_game_view`, `screenshot`
 
 ### Blender MCP (Optional)
 

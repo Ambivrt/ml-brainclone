@@ -89,6 +89,60 @@ Active skill domains: brand-thinking, business-law, seo-sem, business-planning, 
 
 ---
 
+## Garry, Shapes (3D & Spatial Intelligence)
+
+**Modality:** 3D / Spatial, mesh, texture, rigging, animation, game engine
+**Platform:** Unity 6 (CLI + MCP) + Blender (MCP) + Trellis 2 (cloud)
+
+### Capabilities
+| Capability | Tool / Method | Notes |
+|------------|---------------|-------|
+| Unity Editor control | Unity CLI + MCP (150+ tools) | Scene, hierarchy, components, build |
+| Unity scene management | Unity MCP (`get_scene_hierarchy`, `create_gameobject`, etc.) | Full programmatic control |
+| Unity build & test | Unity MCP (`build`, `run_tests`) | Android / standalone / VR targets |
+| Unity console monitoring | Unity MCP (`console`, `get_console_logs`) | Error detection, debug |
+| Unity scripting | Unity MCP (`create_script`, `eval`) | C# code injection |
+| Image to 3D mesh | Trellis 2 via fal.ai / HF Space | Cloud (local requires ~8GB VRAM) |
+| Import 3D models | Blender MCP (import GLB/FBX/OBJ) | Trellis output, external assets |
+| UV remapping | bpy Smart UV Project / manual seams | Fixes Trellis fragmented UVs |
+| Texture bake | bpy bake (diffuse, roughness, metallic) | Upgrade to 4K |
+| Material / PBR setup | Principled BSDF via MCP | Base color, roughness, metallic, normal |
+| Rigging | Mixamo (web) / Rigify (Blender) | Humanoid + manual |
+| Animation prep | Keyframes, pose library | T-pose, A-pose, idle |
+| Rendering | Eevee (fast) / Cycles (quality) | GPU-accelerated |
+| Export | GLB, FBX, OBJ | Unity / Godot / game engines |
+
+### Unity MCP Setup
+
+Unity MCP requires Unity 6+ with the Pipeline package:
+
+```bash
+# Install Unity CLI (via Unity Hub)
+unity --version
+
+# Install Pipeline package in project
+unity pipeline install --project-path "/path/to/project"
+
+# Configure MCP for Claude Code
+unity mcp configure claude-code --project-path "/path/to/project"
+
+# Verify connection (150+ tools available when Editor is running)
+unity pipeline list
+```
+
+The Pipeline package (`com.unity.pipeline`) runs a TCP server (port 7800) inside the Unity Editor, bridging CLI/MCP commands to the running editor instance.
+
+### Cross-Agent Senses
+- **Eyes via Barry**: viewport screenshot -> vision analysis -> QA/feedback
+- **Ears via Harry**: STT voice commands, TTS voice responses
+- Garry owns no senses of its own, pure spatial intelligence
+
+### Operating Modes
+- **Autopilot**: Garry runs the full flow independently
+- **Fly-by-wire**: User runs Blender/Unity, Garry assists on demand
+
+---
+
 ## Parry, Guards (Privacy & Tone)
 
 **Modality:** Filter and judgment layer, sits between Larry and the outside world
@@ -251,11 +305,12 @@ User
   v
 Larry (orchestrator)
   |
-  |-- MODALITIES
+  |-- MODALITIES (senses)
   |   |-- Barry (image) --> Venice via Playwright
+  |   |-- Garry (spatial) --> Unity MCP/CLI, Blender MCP, Trellis 2
   |   +-- Harry (audio) --> Gemini TTS/STT/Live + Venice music/SFX
   |
-  |-- SERVICES
+  |-- SERVICES (organs)
   |   |-- Milla (memory) --> MemPalace MCP, KG, diary, semantic search
   |   |-- Warry (emotion) --> XLM-RoBERTa sentiment, mood tracking
   |   |-- Parry (judgment) --> privacy + tone, gatekeeper
@@ -265,8 +320,9 @@ Larry (orchestrator)
   |   |-- Scarry (conscience) --> retroactive procrastination scanner
   |   +-- Farry (video) --> Gemini Omni Flash (planned)
   |
-  +-- INFRASTRUCTURE
+  +-- INFRASTRUCTURE (skeleton)
       |-- Brains-bus (nervous system) --> SQLite WAL, event routing
+      |-- Model Router --> LLM-agnostic routing, fallback chains
       |-- GWS (voice outward) --> Gmail + Calendar + Drive
       +-- Playwright (hands) --> persistent Edge profile
 ```
