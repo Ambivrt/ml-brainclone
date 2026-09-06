@@ -232,5 +232,5 @@ Barry generates image → Image saved to {{ASSETS_PATH}}/
 
 | Placeholder | Replace with |
 |-------------|--------------|
-| `{{GARRY_PATH}}` | Path to your 3D assets directory (e.g., `D:\04-Garry`) |
+| `{{GARRY_PATH}}` | Path to your 3D assets directory (e.g., `~/3d-assets`) |
 | `{{ASSETS_PATH}}` | Path to your Barry image assets (for pipeline integration) |

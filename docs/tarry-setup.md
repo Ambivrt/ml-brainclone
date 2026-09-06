@@ -167,7 +167,7 @@ python 03-projects/ml-brainclone/bus/brains-bus.py post \
     --from larry \
     --to tarry \
     --kind reminder-request \
-    --payload '{"what":"Review FIA draft","when":"2026-04-23T10:00","channels":["telegram"]}'
+    --payload '{"what":"Review the proposal draft","when":"2026-04-23T10:00","channels":["telegram"]}'
 
 # Read Tarry status
 python 03-projects/ml-brainclone/bus/brains-bus.py read --brain tarry

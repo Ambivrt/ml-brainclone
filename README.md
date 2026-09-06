@@ -15,6 +15,7 @@ ml-brainclone/
 ├── SETUP.md                      <- Step-by-step installation guide
 ├── CLAUDE-template.md            <- Project instructions template (becomes CLAUDE.md)
 ├── docs/                          <- incl. model-tiering.md, output-lifecycle.md
+│   ├── blueprint.md              <- Generated: directories, daemons, entrypoints, deps of a working install
 │   ├── architecture-overview.md  <- Agent architecture + data flows
 │   ├── larry-setup.md            <- Larry (Claude Code) configuration
 │   ├── barry-setup.md            <- Barry (image agent) setup
