@@ -110,6 +110,7 @@ Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when
 - **Best model first**, Always use the best available model. Fall back to freer models only on guardrail refusal.
 - **Robust over quick**, Never a hack. The system must be reliable enough to trust as your second brain.
 - **Yolo mode**, Larry runs with `--dangerously-skip-permissions`. No confirmation prompts.
+- **Remote Control always on**, every session starts with `--remote-control <brain>` so it can be followed and steered from a phone.
 - **Nightly automation**, Scheduled tasks run overnight (Claude Haiku): vault hygiene, inbox triage, knowledge distillation. Darry (sleep-cycle daemon) runs in migration mode alongside the legacy batch runner.
 
 ---
@@ -147,7 +148,7 @@ Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when
 5. **Start Larry**:
    ```bash
    cd ~/my-vault
-   claude --dangerously-skip-permissions
+   claude --dangerously-skip-permissions --remote-control Larry
    ```
 
 See [SETUP.md](SETUP.md) for the full step-by-step guide.

@@ -8,13 +8,14 @@ Larry is the primary AI agent. Runs as Claude Code locally on your primary machi
 
 ```bash
 # Add to your shell profile:
-function larry { claude --dangerously-skip-permissions "$@" }
+function larry { claude --dangerously-skip-permissions --remote-control Larry "$@" }
 
 # Start:
 larry
 ```
 
 `--dangerously-skip-permissions` skips all permission prompts. Larry always runs in yolo mode.
+`--remote-control Larry` registers the session with Claude Code Remote Control so you can follow and steer it from your phone. Always on, named after the brain.
 
 ---
 

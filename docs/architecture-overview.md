@@ -246,7 +246,7 @@ All batches run between 01:00–06:00 only.
 3. **Privacy is configuration** — levels control which models MAY be used
 4. **Vault is text-only** — no binary files. Images → assets, Audio → audio
 5. **Robust over quick** — never a hack, always a reliable solution
-6. **Yolo mode** — Larry always runs with `--dangerously-skip-permissions`
+6. **Yolo mode** — Larry always runs with `--dangerously-skip-permissions`, and `--remote-control <brain>` is always on
 7. **Parry guards** — middleware filter on all output, three modes: off/balanced/strict
 
 See [Larry's Ten Commandments](ten-commandments.md) for the full operating principles.
