@@ -56,10 +56,16 @@ ml-brainclone/
 │   ├── gws_mailer.py                 <- Outgoing-mail helper with local archiving
 │   ├── vault-ingest.py               <- Convert documents (PDF/DOCX/PPTX/XLSX) to vault Markdown
 │   ├── nightly-runner.sh             <- Nightly batch runner (PATH hardening, singleton kill, batch dispatch)
+│   ├── brief_output.py               <- Validated atomic write for the morning brief, see docs/security-untrusted-input.md
+│   ├── collect-calendar.py           <- Deterministic calendar fetch (no LLM in the loop) for the morning brief
+│   ├── prompts/batch3-morning-brief.md <- Example morning brief prompt with the untrusted-data section
 │   ├── system_tag_batch.py           <- Path-based system/* tagging (idempotent), see docs/system-taxonomy.md
 │   ├── inbox_reaper.py               <- Deletes expired auto-reports from 00-inbox, see docs/vault-hygiene.md
 │   ├── parry-scheduled-task.xml      <- Windows Task Scheduler template for Parry autostart
 │   └── register-parry-task.ps1       <- One-shot registration script (run once at setup)
+├── tests/
+│   ├── test_brief_output.py          <- brief_output.py: validation + atomic write + CLI mode
+│   └── test_nightly_runner_readonly.py <- Structural checks on the morning brief's read-only hardening
 ├── architecture/
 │   ├── personalities/
 │   │   ├── README.md                 <- Personality system: character sheets, switching rules, middleware
@@ -199,6 +205,7 @@ Throughout all files, replace these with your own values:
 | [docs/farry-setup.md](docs/farry-setup.md) | Farry video agent: multimodal video reasoning |
 | [docs/model-tiering.md](docs/model-tiering.md) | One config file decides every model choice: intent-named resolvers, effort as a tier dimension, voice-sensitive levels |
 | [docs/output-lifecycle.md](docs/output-lifecycle.md) | Generated reports need an expiry, quality gates need to cover the surfaces you actually read |
+| [docs/security-untrusted-input.md](docs/security-untrusted-input.md) | Prompt injection via scraped feeds, mail and calendar invites: read-only sessions, deterministic collectors, schema-validated writes |
 | [architecture/personalities/README.md](architecture/personalities/README.md) | Personality system: character sheets, switching rules, Parry middleware |
 | [architecture/telegram-v2-spec.md](architecture/telegram-v2-spec.md) | Platform adapter spec: multi-channel message routing (Telegram, CLI, email) |
 

@@ -40,11 +40,16 @@ NIGHTLY_MODEL="${LARRY_NIGHTLY_MODEL:-$MODEL}"
 VAULT="${VAULT_PATH:?VAULT_PATH must be set}"
 NIGHTLY_DIR="$VAULT/03-projects/ml-brainclone/operations/nattskift"
 PROMPT_DIR="$NIGHTLY_DIR/prompts"
+DATA_DIR="$NIGHTLY_DIR/.data"
 LOG_DIR="$NIGHTLY_DIR/logs"
 TODAY=$(date +%Y-%m-%d)
 TIMESTAMP=$(date +%Y-%m-%d_%H%M%S)
 
-mkdir -p "$LOG_DIR"
+# Directory this script lives in — brief_output.py and collect-calendar.py
+# ship next to it (see docs/security-untrusted-input.md).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+mkdir -p "$LOG_DIR" "$DATA_DIR"
 
 LOGFILE="$LOG_DIR/nightly-$TIMESTAMP.log"
 
@@ -57,30 +62,112 @@ run_batch() {
     local batch_name="$2"
     local prompt_file="$PROMPT_DIR/$3"
     local effort="${4:-high}"
+    # -------------------------------------------------------------------
+    # Untrusted-input hardening — see docs/security-untrusted-input.md.
+    #
+    # A session that reads text written by strangers (social scan output:
+    # X/LinkedIn/Reddit posts, mail subjects, calendar invite descriptions)
+    # must not also hold tools that can act on what it read. A prompt
+    # injection hiding in that text has nothing to reach if the session
+    # can only read.
+    #
+    # restrict_readonly=true switches this call to that mode:
+    #   - no --dangerously-skip-permissions
+    #   - --tools Read,Glob,Grep only (no Bash, Write, Edit)
+    #   - --strict-mcp-config with no --mcp-config, i.e. zero MCP servers
+    #     (no Playwright/browser tools even if project or user config
+    #     would otherwise attach them)
+    #   - --add-dir grants read access to the vault and the nightly data
+    #     directory despite permissions not being bypassed
+    #
+    # capture_file, when set, redirects the session's stdout (its answer)
+    # to that file instead of letting it write output to disk directly.
+    # The caller then hands the file to scripts/brief_output.py, which
+    # validates it and writes the real target file atomically — a broken
+    # or truncated response never overwrites a previously good one.
+    #
+    # Every other batch call leaves both arguments unset and gets exactly
+    # the previous behavior. Do not default restrict_readonly to true.
+    # -------------------------------------------------------------------
+    local restrict_readonly="${5:-false}"
+    local capture_file="${6:-}"
 
     if [ ! -f "$prompt_file" ]; then
         log "ERROR: Prompt file missing: $prompt_file"
         return 1
     fi
 
-    log "=== Starting Batch $batch_num: $batch_name (effort=$effort) ==="
+    log "=== Starting Batch $batch_num: $batch_name (effort=$effort, readonly=$restrict_readonly) ==="
 
     local prompt_content
     prompt_content=$(cat "$prompt_file")
 
-    if echo "$prompt_content" | claude --print \
-        --dangerously-skip-permissions \
-        --model "$NIGHTLY_MODEL" \
-        --effort "$effort" \
-        --fallback-model "$MODEL" \
-        --max-turns 30 \
-        >> "$LOGFILE" 2>&1; then
-        log "=== Batch $batch_num DONE ==="
-    else
-        local exit_code=$?
-        log "=== Batch $batch_num FAILED (exit code: $exit_code) ==="
-        return 1
+    local perm_flags="--dangerously-skip-permissions"
+    local tool_flags=""
+    if [ "$restrict_readonly" = "true" ]; then
+        perm_flags=""
+        tool_flags="--tools Read,Glob,Grep --strict-mcp-config --add-dir $VAULT --add-dir $NIGHTLY_DIR"
     fi
+
+    if [ -n "$capture_file" ]; then
+        # shellcheck disable=SC2086  # perm_flags/tool_flags are intentionally
+        # unquoted so an empty value expands to nothing rather than "".
+        if echo "$prompt_content" | claude --print $perm_flags \
+            --model "$NIGHTLY_MODEL" \
+            --effort "$effort" \
+            --fallback-model "$MODEL" \
+            --max-turns 30 \
+            $tool_flags \
+            > "$capture_file" 2>>"$LOGFILE"; then
+            cat "$capture_file" >> "$LOGFILE" 2>/dev/null || true
+            log "=== Batch $batch_num DONE ==="
+        else
+            local exit_code=$?
+            log "=== Batch $batch_num FAILED (exit code: $exit_code) ==="
+            return 1
+        fi
+    else
+        # shellcheck disable=SC2086
+        if echo "$prompt_content" | claude --print $perm_flags \
+            --model "$NIGHTLY_MODEL" \
+            --effort "$effort" \
+            --fallback-model "$MODEL" \
+            --max-turns 30 \
+            $tool_flags \
+            >> "$LOGFILE" 2>&1; then
+            log "=== Batch $batch_num DONE ==="
+        else
+            local exit_code=$?
+            log "=== Batch $batch_num FAILED (exit code: $exit_code) ==="
+            return 1
+        fi
+    fi
+}
+
+run_morning_brief() {
+    # Shared by the "3", "workflow", and "all" cases below so the
+    # read-only wiring lives in exactly one place.
+    log "--- Calendar collection (deterministic, no LLM in the loop) ---"
+    if timeout 120 python3 "$SCRIPT_DIR/collect-calendar.py" >> "$LOGFILE" 2>&1; then
+        log "--- Calendar collection done ---"
+    else
+        log "--- Calendar collection FAILED (continuing with empty/stale calendar-today.json) ---"
+    fi
+
+    local brief_target="$VAULT/00-inbox/morning-brief-$TODAY.md"
+    local brief_capture="$DATA_DIR/.batch3-stdout-$TODAY.txt"
+
+    log "--- Morning brief compilation (read-only session, no MCP) ---"
+    run_batch 3 "Morning brief" "batch3-morning-brief.md" "xhigh" "true" "$brief_capture" || true
+
+    if python3 "$SCRIPT_DIR/brief_output.py" "$brief_capture" "$brief_target" >> "$LOGFILE" 2>&1; then
+        log "--- Brief written: $brief_target ---"
+    else
+        log "--- Brief validation failed, previous file kept (see $brief_target) ---"
+    fi
+    rm -f "$brief_capture"
+
+    run_batch "3b" "Daily note" "batch3b-daily-note.md" || true
 }
 
 run_workflow() {
@@ -221,8 +308,7 @@ case "$BATCH" in
         run_batch 2 "Inbox triage" "batch2-inbox-triage.md"
         ;;
     3)
-        run_batch 3 "Morning brief" "batch3-morning-brief.md" "xhigh"
-        run_batch "3b" "Daily note" "batch3b-daily-note.md" || true
+        run_morning_brief
         ;;
     4)
         run_batch 4 "Reddit scan" "batch4-reddit.md"
@@ -267,8 +353,7 @@ case "$BATCH" in
         # Phase 4: Morning brief (Claude CLI, ALWAYS LAST — summarizes everything)
         # Reddit data already collected in step 0e (social-scan.py -> .data/social-scan.txt)
         log "--- Phase 4: Morning brief ---"
-        run_batch 3 "Morning brief" "batch3-morning-brief.md" "xhigh" || true
-        run_batch "3b" "Daily note" "batch3b-daily-note.md" || true
+        run_morning_brief
         ;;
     all)
         log "Running all batches in sequence (legacy mode)..."
@@ -284,8 +369,7 @@ case "$BATCH" in
         [ -f "$FA_COLLECT" ] && python3 "$FA_COLLECT" >> "$LOGFILE" 2>&1 || true
         run_batch 7 "Feedback audit" "batch7-feedback-audit.md" || true
         run_batch 8 "Stuck feedback" "batch8-stuck-feedback.md" || true
-        run_batch 3 "Morning brief" "batch3-morning-brief.md" "xhigh" || true
-        run_batch "3b" "Daily note" "batch3b-daily-note.md" || true
+        run_morning_brief
         ;;
     *)
         log "Unknown batch number: $BATCH"
