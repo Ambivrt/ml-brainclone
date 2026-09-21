@@ -7,7 +7,7 @@ Warry is Larry's emotional barometer. It measures sentiment in text — single m
 - **Harry** — hears and speaks (audio)
 - **Parry** — guards, filters, judges
 - **Tarry** — remembers when
-- **Farry** — watches and directs (video)
+- **Farry**: understands all languages
 - **Warry** — feels the temperature
 
 ---

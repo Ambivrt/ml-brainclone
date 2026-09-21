@@ -25,8 +25,14 @@ ml-brainclone/
 │   ├── memory-system.md          <- Persistent memory architecture
 │   ├── parry-setup.md            <- Parry (gatekeeper agent) setup + commands
 │   ├── tarry-setup.md            <- Tarry (temporal agent) setup + queue + Task Scheduler
-│   ├── karry-setup.md            <- Karry (location agent) setup + geo-fences + MCP tools
-│   ├── farry-setup.md            <- Farry (video agent) setup
+│   ├── karry-setup.md            <- Karry (location agent), discontinued, pattern reference only
+│   ├── farry-setup.md            <- Farry (interpreter service) setup: live translation, format conversion
+│   ├── model-tiering.md          <- One JSON tier file, orchestrator/bulk/on-request models, effort levels
+│   ├── oversight.md              <- Human-in-the-loop: in_loop/on_loop/autonomous, the ask module
+│   ├── status-file.md            <- Code-generated status file that replaced daily notes
+│   ├── decision-gate.md          <- Typed decision model outside the text gateway, shadow mode
+│   ├── finish-the-job.md         <- Open-thread pickup, job receipts, capability suggestions
+│   ├── code-layout.md            <- Source repo, deployed runtime, binaries, config: four separate places
 │   ├── brains-bus-setup.md       <- SQLite event bus between agents, guarded by Parry
 │   ├── task-dispatch.md          <- Inter-agent work queue: dispatch from any channel
 │   ├── proactivity.md            <- Larry acts, doesn't just report: scanner + dispatcher + nightly triggers
@@ -81,30 +87,33 @@ ml-brainclone/
 
 ## The Agent Ecosystem
 
+12 agents: one orchestrator, three modalities, eight services. 10 daemons run under one watchdog with singleton locks and a circuit breaker (three failed restarts and it stops trying).
+
 ### Modalities (senses)
 
 | Agent | Modality | What it does | Technology |
 |-------|----------|-------------|------------|
-| **Larry** | Text | Orchestrator. Thinks, writes, codes, plans, remembers. | Claude Code (Opus/Sonnet) |
+| **Larry** | Text | Orchestrator. Thinks, writes, codes, plans, remembers. | Claude Code (see [docs/model-tiering.md](docs/model-tiering.md)) |
 | **Barry** | Image | Generates images, sorts visual material, maintains visual index. | Venice Chat via Playwright |
-| **Harry** | Audio | Text-to-speech, music, sound effects, mixing. | Gemini TTS (Vertex AI) + FFmpeg |
-| **Garry** | Spatial | Image-to-3D mesh, background removal, Blender import. | Trellis 2 + rembg + Blender |
+| **Harry** | Audio | TTS, STT, realtime voice, music. Also runs a dictation daemon. | Gemini TTS (Vertex AI) + FFmpeg |
+| **Garry** | Spatial | Image-to-3D mesh, background removal, Blender import, export into a game engine. | Trellis 2 + rembg + Blender |
 
 ### Services (organs)
 
 | Agent | Function | What it does | Technology |
 |-------|----------|-------------|------------|
 | **Milla** | Memory | Semantic search, knowledge graph, diary, palace traversal. Never forgets. | MemPalace MCP (ChromaDB, GPU) |
-| **Warry** | Emotion | Sentiment scoring, mood tracking, trend detection. Measures, never interprets. | XLM-RoBERTa (local GPU) |
-| **Parry** | Judgment | Privacy enforcement, tone control, quality gating. | Python daemon (parry_service.py) |
+| **Parry** | Judgment | Privacy enforcement, tone control, quality gating on the bus. | Python daemon (parry_service.py) |
 | **Tarry** | Time | Reminders, follow-ups, recurring tasks, interrupted session recovery. | Brain runtime (tarry_brain.py, composes capabilities) |
 | **Carry** | Logistics | Transport content in/out/between systems. Pipelines with retry. | Brain runtime (carry_brain.py, composes capabilities) |
-| **Darry** | Sleep | Night shift 2.0: Light/Deep/REM sleep phases. Adaptive nightly processing. | Brain runtime (darry_brain.py, composes capabilities) |
-| **Scarry** | Conscience | Retroactive scanner. Finds procrastinated and forgotten tasks. Hooked into Darry deep sleep. | Python script (scheduled) |
-| **Karry** | Location | Spatial awareness. Position tracking, geo-fences, place intelligence, navigation. Hybrid daemon + MCP server. | Google Maps API + Nominatim |
-| **Farry** | Video | Video understanding, analysis, clip generation. Multimodal video reasoning. | Gemini Omni Flash (planned) |
+| **Darry** | Sleep | Night shift: nine batches, morning brief at 05:30. Adaptive nightly processing. | Brain runtime (darry_brain.py, composes capabilities) |
+| **Scarry** | Conscience | Retroactive scanner. Finds procrastinated and forgotten tasks, now also picks up open threads. | Python script (scheduled) |
+| **Warry** | Emotion | Sentiment scoring, mood tracking, trend detection. Measures, never interprets. Local GPU. | Brain runtime (warry_brain.py) |
+| **Farry** | Interpreter | Live translation ("Babel fish" mode), machine translation, format conversion (json/yaml/toml/xml/csv). Checks memory first for consistent terminology. | Translation/format service |
 
-Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when needed. Daemons (Parry, Tarry, Carry, Darry, Karry) run in the background. Each background agent runs as a Brain (a `*_brain.py` entrypoint that composes shared capabilities), brought up by a consolidated start script and kept alive by a heartbeat-aware watchdog. See ARCHITECTURE.md (Capability Composition). Parry stays a plain daemon (the bus gatekeeper). Scarry runs on schedule via Darry. Warry is invoked on demand. Farry is planned.
+There is no video agent. Karry (a former location agent) is discontinued; see [docs/karry-setup.md](docs/karry-setup.md) for the pattern it left behind.
+
+Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when needed. Daemons run in the background. Each background agent runs as a Brain (a `*_brain.py` entrypoint that composes shared capabilities), brought up by a consolidated start script and kept alive by a heartbeat-aware watchdog. See ARCHITECTURE.md (Capability Composition). Parry stays a plain daemon (the bus gatekeeper). Scarry runs on schedule via Darry. Warry and Farry are invoked on demand.
 
 ---
 
@@ -115,9 +124,9 @@ Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when
 - **Privacy layers**, Four levels (L1 public through L4 deeply personal), enforced by code.
 - **Best model first**, Always use the best available model. Fall back to freer models only on guardrail refusal.
 - **Robust over quick**, Never a hack. The system must be reliable enough to trust as your second brain.
-- **Yolo mode**, Larry runs with `--dangerously-skip-permissions`. No confirmation prompts.
+- **Yolo mode**, Larry runs with `--dangerously-skip-permissions`. No confirmation prompts, but this sits underneath an oversight layer, not instead of one: a rule engine decides per action whether it waits for a yes, happens with an undo window, or just gets logged. See [docs/oversight.md](docs/oversight.md).
 - **Remote Control always on**, every session starts with `--remote-control <brain>` so it can be followed and steered from a phone.
-- **Nightly automation**, Scheduled tasks run overnight (Claude Haiku): vault hygiene, inbox triage, knowledge distillation. Darry (sleep-cycle daemon) runs in migration mode alongside the legacy batch runner.
+- **Nightly automation**, nine scheduled batches run overnight, morning brief at 05:30. Bulk work (vault hygiene, inbox triage, knowledge distillation) runs on the cheapest model tier that clears the bar, never the smallest one. See [docs/model-tiering.md](docs/model-tiering.md).
 
 ---
 
@@ -201,11 +210,16 @@ Throughout all files, replace these with your own values:
 | [docs/agent-capabilities.md](docs/agent-capabilities.md) | Capability matrix for all agents: tools, skill domains, ecosystem flow |
 | [docs/tarry-setup.md](docs/tarry-setup.md) | Tarry temporal daemon: reminders, follow-ups, release chains, Task Scheduler autostart |
 | [docs/content-campaigns.md](docs/content-campaigns.md) | Content campaign management: calendar + Tarry chains + morning brief pipeline |
-| [docs/karry-setup.md](docs/karry-setup.md) | Karry location agent: position tracking, geo-fences, place intelligence |
-| [docs/farry-setup.md](docs/farry-setup.md) | Farry video agent: multimodal video reasoning |
+| [docs/karry-setup.md](docs/karry-setup.md) | Karry location agent (discontinued): kept for the hybrid daemon + MCP pattern |
+| [docs/farry-setup.md](docs/farry-setup.md) | Farry interpreter service: live translation, format conversion |
 | [docs/model-tiering.md](docs/model-tiering.md) | One config file decides every model choice: intent-named resolvers, effort as a tier dimension, voice-sensitive levels |
 | [docs/output-lifecycle.md](docs/output-lifecycle.md) | Generated reports need an expiry, quality gates need to cover the surfaces you actually read |
 | [docs/security-untrusted-input.md](docs/security-untrusted-input.md) | Prompt injection via scraped feeds, mail and calendar invites: read-only sessions, deterministic collectors, schema-validated writes |
+| [docs/oversight.md](docs/oversight.md) | Human-in-the-loop rule engine: in_loop, on_loop, autonomous, the ask module |
+| [docs/status-file.md](docs/status-file.md) | Code-generated status file that replaced daily notes |
+| [docs/decision-gate.md](docs/decision-gate.md) | Typed decision model outside the text gateway: guards, shadow mode |
+| [docs/finish-the-job.md](docs/finish-the-job.md) | Open-thread pickup, job receipts, capability suggestions, hardened morning brief |
+| [docs/code-layout.md](docs/code-layout.md) | The four-way code layout: source repo, deployed runtime, binaries, config |
 | [architecture/personalities/README.md](architecture/personalities/README.md) | Personality system: character sheets, switching rules, Parry middleware |
 | [architecture/telegram-v2-spec.md](architecture/telegram-v2-spec.md) | Platform adapter spec: multi-channel message routing (Telegram, CLI, email) |
 

@@ -120,7 +120,7 @@ Runs after KG hygiene, before morning brief:
 |-------|------|---------|
 | ... | 04:00 | KG hygiene |
 | **Feedback audit** | **04:30** | **Cross-reference + prioritize** |
-| Morning brief | 06:00 | Summary (can reference audit) |
+| Morning brief | 05:30 | Summary (can reference audit) |
 
 In the `all` sequence of the nightly runner:
 1. Python collector runs first (fast, <10s)
@@ -200,6 +200,6 @@ See [memory-system.md](memory-system.md) Layer 4 for full dreaming architecture.
 
 ## Scaling
 
-The collector handles 150+ feedback files in <1 second. The Claude batch processes the condensed summary, not raw files. Cost is one Haiku/Sonnet call per night (~$0.01-0.05).
+The collector handles 150+ feedback files in <1 second. The Claude batch processes the condensed summary, not raw files. It runs on the bulk model tier (`simple_model()`, low effort), never a hardcoded model name, at roughly $0.01-0.05 per night.
 
 As feedback files grow beyond 200, the STALE section becomes increasingly valuable -- it identifies rules to merge or archive, keeping the active set manageable.

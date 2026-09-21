@@ -14,7 +14,7 @@ The smoketest catches the 80% of regressions that matter (tool use, privacy enfo
 
 ## When to run it
 
-- **Primary trigger:** Anthropic releases a new Sonnet/Opus/Haiku version and you want to upgrade
+- **Primary trigger:** a new model version ships for one of your configured tiers and you want to upgrade
 - **After editing `CLAUDE.md` or the Ten Commandments** — verify the rules still bind
 - **After MCP server upgrades** (semantic memory, audio, image agents)
 - **After a large vault refactor** (folder renames, privacy reorganization)
@@ -85,7 +85,7 @@ Compare runs over time. A single fail in one category is noise; a consistent fai
 
 Upgrade to a full benchmark framework when:
 
-1. **You swap models frequently** (e.g., Haiku for cost, Opus for quality) and need automated diffs
+1. **You swap models frequently** (bulk tier for cost, orchestrator tier for quality) and need automated diffs
 2. **You publish your Larry pattern as open source** — the eval suite becomes documentation
 3. **A real incident happens** (privacy leak, destructive op executed) — you want to codify the test that would have caught it
 4. **Your test count grows past ~30** — manual checking becomes impractical

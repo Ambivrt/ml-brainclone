@@ -7,7 +7,7 @@ Central reference for what each agent can do. Used by all agents for routing and
 ## Larry, Orchestrates (Text & Code)
 
 **Modality:** Text, code, planning, memory
-**Model:** Claude (Sonnet/Opus/Haiku depending on task)
+**Model:** Resolved from one model-tier file, never hardcoded. Orchestrator tier at medium effort for anything a human reads, bulk tier at low effort for subagents and batch work, top tier only on explicit request. See [model-tiering.md](model-tiering.md).
 
 ### Capabilities
 | Capability | Tool / Method | Notes |
@@ -146,7 +146,7 @@ The Pipeline package (`com.unity.pipeline`) runs a TCP server (port 7800) inside
 ## Parry, Guards (Privacy & Tone)
 
 **Modality:** Filter and judgment layer, sits between Larry and the outside world
-**Model:** Claude (fast Haiku for hooks, Sonnet for deep review)
+**Model:** Mostly deterministic (rules, regex, secret scan). Where a model call is needed, the bulk tier handles fast checks and the escalation tier handles deeper review, both resolved from the model-tier file.
 
 ### Capabilities
 | Capability | Tool / Method | Notes |
@@ -234,13 +234,15 @@ The Pipeline package (`com.unity.pipeline`) runs a TCP server (port 7800) inside
 **System:** Brain (`darry_brain.py`, composes capabilities)
 
 ### Capabilities
-| Capability | Model | Phase |
-|------------|-------|-------|
-| Light Sleep, quick maintenance | Haiku | Every night |
-| Deep Sleep, heavy processing | Sonnet + GPU | Adaptive (conditions-based) |
-| REM Sleep, creative analysis | Opus | 1-2x/week |
-| Morning brief 2.0 | Summarizes all phases | After sleep |
+| Capability | Model tier | Phase |
+|------------|-----------|-------|
+| Light Sleep, quick maintenance | Bulk | Every night |
+| Deep Sleep, heavy processing | Escalation + GPU | Adaptive (conditions-based) |
+| REM Sleep, creative analysis | Escalation | 1-2x/week |
+| Morning brief | Summarizes all phases, at 05:30 | After sleep |
 | Adaptive scheduling | Conditions-based | Skip phases with nothing to do |
+
+Model tiers are resolved from the one model-tier file, never hardcoded. See [model-tiering.md](model-tiering.md) and [darry-setup.md](darry-setup.md).
 
 ---
 
@@ -258,23 +260,24 @@ The Pipeline package (`com.unity.pipeline`) runs a TCP server (port 7800) inside
 | Project scan | Git log + vault | Dead projects, passed deadlines |
 | Admin scan | KG + vault | Contracts, insurance, renewals |
 | False-positive filter | Tarry cross-check | Avoids duplication |
-| Question formulation | Sonnet | Nudge, never instruct |
+| Question formulation | Bulk model tier | Nudge, never instruct |
 
 ---
 
-## Farry, Directs (Video Agent)
+## Farry, Interprets (Universal Interpreter)
 
-**Modality:** Video, understanding, analysis, generation
-**System:** On-demand subprocess (planned, not yet active)
+**Modality:** Language and format, live translation, machine translation, format conversion
+**System:** On-demand session, invoked by Larry
+
+There is no video agent in this ecosystem.
 
 ### Capabilities
 | Capability | Tool / Method | Notes |
 |------------|---------------|-------|
-| Video understanding | Gemini Omni Flash | Analyze footage, describe scenes |
-| Timeline analysis | Gemini Omni Flash | Key moments, transitions, structure |
-| Clip generation | Gemini Omni Flash | Generate short clips from prompts |
-| Multimodal reasoning | Gemini Omni Flash | Combined video + audio + text |
-| Event extraction | Gemini Omni Flash | Structured data from video content |
+| Live translation | "Babel fish" mode | Real-time, spoken or typed |
+| Machine translation | Batch translation | Documents, messages |
+| Format conversion | json/yaml/toml/xml/csv | Structural conversion, not just text |
+| Terminology consistency | Checks memory first | Keeps names and terms stable across languages |
 
 ---
 
@@ -292,7 +295,7 @@ The Pipeline package (`com.unity.pipeline`) runs a TCP server (port 7800) inside
 | Daily mood snapshot | Night shift / Darry | Appends to mood log |
 | Sustained negative alert | Auto-trigger → Tarry | >3 messages below -0.5 |
 
-**Model:** `cardiffnlp/twitter-xlm-roberta-base-sentiment` (multilingual, ~1.1 GB VRAM)
+**Model:** Local multilingual sentiment model, GPU-resident
 **Rule:** Warry measures, never interprets. Numbers and trends, the user owns the insight.
 
 ---
@@ -312,13 +315,13 @@ Larry (orchestrator)
   |
   |-- SERVICES (organs)
   |   |-- Milla (memory) --> MemPalace MCP, KG, diary, semantic search
-  |   |-- Warry (emotion) --> XLM-RoBERTa sentiment, mood tracking
+  |   |-- Warry (emotion) --> local sentiment model, mood tracking
   |   |-- Parry (judgment) --> privacy + tone, gatekeeper
   |   |-- Tarry (time) --> reminders, deadlines, proactivity
   |   |-- Carry (logistics) --> transport in/out/internal
-  |   |-- Darry (sleep) --> night shift Light/Deep/REM
-  |   |-- Scarry (conscience) --> retroactive procrastination scanner
-  |   +-- Farry (video) --> Gemini Omni Flash (planned)
+  |   |-- Darry (sleep) --> night shift, nine batches, morning brief 05:30
+  |   |-- Scarry (conscience) --> retroactive scanner, picks up open threads
+  |   +-- Farry (interpreter) --> live translation, format conversion
   |
   +-- INFRASTRUCTURE (skeleton)
       |-- Brains-bus (nervous system) --> SQLite WAL, event routing

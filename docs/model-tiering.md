@@ -125,8 +125,23 @@ Test the resolver, not the model names, with two exceptions worth pinning:
 - Escalation returns a model at least as capable as the default, if your
   system depends on that ordering.
 
+## A separate tier for gates and classification
+
+Not every decision needs a text model. A typed decision model, one that takes
+state and a typed question (yes/no, a choice, a score) and returns
+probabilities or a confidence value, can sit outside the text gateway
+entirely. It writes no prose, so it is cheaper to run and easier to guard: a
+privacy ceiling, a secret gate, and a hard budget cap in front of every call,
+with a cost ledger that logs tokens and purpose but never the content.
+
+Route a gate or a classification step there instead of asking the text model
+for a "yes or no" answer in prose. Run it in shadow mode first, generating
+decision data without acting on it, until you trust it enough to let it act.
+See [docs/decision-gate.md](decision-gate.md).
+
 ## See also
 
 - [token-hygiene.md](token-hygiene.md) for spend control
+- [docs/decision-gate.md](decision-gate.md) for the typed decision model
 - [ARCHITECTURE.md](../ARCHITECTURE.md#model-configuration-per-mode) for
   per-modality model choices

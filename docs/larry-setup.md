@@ -14,7 +14,7 @@ function larry { claude --dangerously-skip-permissions --remote-control Larry "$
 larry
 ```
 
-`--dangerously-skip-permissions` skips all permission prompts. Larry always runs in yolo mode.
+`--dangerously-skip-permissions` skips all permission prompts. Larry always runs in yolo mode, but yolo mode is not the same as no oversight: a rule engine still decides per action whether it waits for a yes, happens inside an undo window, or is just logged. See [docs/oversight.md](oversight.md).
 `--remote-control Larry` registers the session with Claude Code Remote Control so you can follow and steer it from your phone. Always on, named after the brain.
 
 ---
@@ -254,7 +254,7 @@ Automated batch jobs via OS task scheduler:
 └── logs/                     ← Run logs (gitignored)
 ```
 
-Runs with `claude --print --model haiku`. Writes ONLY to `00-inbox/`.
+Runs with `claude --print --model $(simple_model()) --effort low`, resolved from the one model-tier file at run time, never a hardcoded model name. Writes ONLY to `00-inbox/`. These sessions read mail, feeds, and other untrusted content, so they run without shell or MCP tools; see [docs/security-untrusted-input.md](security-untrusted-input.md).
 
 **Step 0 (runs before all batches):** `mempalace mine` indexes new/changed vault files incrementally.
 
@@ -262,12 +262,16 @@ Runs with `claude --print --model haiku`. Writes ONLY to `00-inbox/`.
 
 ## Model Routing
 
-| Alias | Model | Trigger |
-|-------|-------|---------|
-| **Haiku** | Claude Haiku | Nightly tasks, routine operations |
-| **Sonnet** | Claude Sonnet | Daily notes, triage, standard work |
-| **Opus** | Claude Opus | Architecture, strategy, deep analysis |
-| **Opus 1M** | Claude Opus 1M | Mega-sessions, full vault |
+One JSON tier file is the single source of truth: `default`, `escalation`, `simple`, `cli_fallback`, `on_request`, each carrying a model and an effort level. Code reads it through `default_model()`/`simple_model()` and their effort equivalents, never a hardcoded string. Example roster on the reference system as of September 2026:
+
+| Tier | Model | Effort | Trigger |
+|------|-------|--------|---------|
+| `default` (orchestrator) | Opus 4.6 | Medium | Chief of staff, architecture, quality checks, anything a human reads |
+| `simple` (bulk) | Sonnet 5 | Low | Nightly batches, triage, subagents, translation, KG extraction |
+| `cli_fallback` | Sonnet 5 | Medium | Only when the orchestrator model does not respond |
+| `on_request` | Top-tier model | Medium | Specs and code architecture, only when explicitly asked for |
+
+The smallest available tier is never used.
 
 Fallback: Venice (DeepSeek/Qwen, E2EE) on guardrail refusal.
 

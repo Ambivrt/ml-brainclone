@@ -1,48 +1,52 @@
-# Farry Setup -- Video Agent
+# Farry Setup -- Universal Interpreter
 
-Farry is the video modality agent. It handles video understanding, analysis, and generation using multimodal AI models.
+Farry is the ecosystem's language and format service: live translation, machine translation, and structural format conversion. There is no video agent in this ecosystem; if you came here looking for one, it does not exist.
 
 - **Larry** -- thinks, plans, orchestrates
 - **Barry** -- sees (images)
 - **Harry** -- hears and speaks (audio)
 - **Garry** -- shapes (3D)
-- **Farry** -- watches and directs (video)
+- **Farry** -- understands all languages
 
 ---
 
-## Status: Planned
+## Status: Live
 
-Farry is designed but not yet active. It is waiting for the Gemini Omni Flash API to become generally available. The architecture and integration points are defined below.
+Farry is an active service, invoked on demand.
 
 ---
 
-## What Farry Will Do
+## What Farry Does
 
 | Domain | Function |
 |--------|----------|
-| Video understanding | Analyze footage, describe scenes, extract key moments |
-| Timeline analysis | Identify important segments, transitions, and narrative structure |
-| Clip generation | Generate short video clips from prompts or scene descriptions |
-| Multimodal reasoning | Combine video, audio, and text understanding in a single pass |
-| Event extraction | Pull structured data from video content (meetings, presentations, events) |
+| Live translation | "Babel fish" mode: real-time translation of spoken or typed conversation |
+| Machine translation | Batch translation of documents, messages, notes |
+| Format conversion | Structural conversion between json, yaml, toml, xml, csv |
+| Terminology consistency | Checks memory first, so a name or term translates the same way every time |
+
+Farry does not do video. It does not do image or audio generation, those belong to Barry and Harry.
 
 ---
 
 ## Architecture
 
-Farry runs as an on-demand subprocess, similar to Barry and Harry. Larry invokes it when a task requires video capabilities.
+Farry runs as an on-demand session, similar to Garry. Larry invokes it when a task needs translation or format conversion.
 
 ```
-User request ("analyze this video")
+User request ("translate this live" / "convert this to yaml")
         |
         v
 Larry receives message
         |
         v
-Farry invoked (on-demand subprocess)
+Farry invoked (on-demand session)
         |
         v
-Gemini Omni Flash processes video
+Memory checked first for consistent terminology
+        |
+        v
+Translation / conversion performed
         |
         v
 Result returned to Larry -> user
@@ -54,19 +58,18 @@ Result returned to Larry -> user
 
 | Component | Role |
 |-----------|------|
-| **Gemini Omni Flash** | Primary model for video understanding and generation |
+| **Model call** | Resolved from the one model-tier file, never hardcoded. See [model-tiering.md](model-tiering.md) |
+| **Memory check** | Queries Milla for established terminology before translating a name or term |
 | **Bus integration** | Posts results as bus events for other agents to consume |
-| **Vault logging** | All video analysis results stored as vault notes |
+| **Vault logging** | Translation and conversion results stored as vault notes when they matter beyond the conversation |
 
 ---
 
 ## Integration Points
 
-- **Larry**: Invokes Farry for video tasks, receives structured results
-- **Barry**: Can hand off video frames to Barry for image analysis or generation
-- **Harry**: Can extract audio tracks for Harry to process (transcription, TTS)
-- **Milla**: Video analysis results indexed in semantic memory
-- **Brains Bus**: Posts `video_analysis` events for downstream processing
+- **Larry**: Invokes Farry for translation and format-conversion tasks, receives structured results
+- **Milla**: Farry checks memory before translating so terminology stays consistent across languages
+- **Brains Bus**: Posts translation/conversion events for downstream processing
 
 ---
 
@@ -74,26 +77,24 @@ Result returned to Larry -> user
 
 | Component | Required? | Notes |
 |-----------|-----------|-------|
-| **Gemini Omni Flash API access** | Yes | Google AI Studio or Vertex AI |
-| **FFmpeg** | Yes | Video frame extraction and processing |
-| **GPU (CUDA)** | Recommended | Faster local preprocessing |
+| **Text model access** | Yes | Whatever model family your tier file resolves to |
+| **Milla / MemPalace** | Recommended | For terminology consistency checks |
 
 ---
 
 ## Installation
 
-When the API becomes available:
-
-1. Configure Gemini Omni Flash API credentials.
-2. Copy the Farry script to `03-projects/ml-brainclone/agents/farry.py`.
-3. Register Farry in the daemon-manager (on-demand mode, not continuous).
-4. Add bus event routing for `video_analysis` kind.
+1. Copy the Farry script to `03-projects/ml-brainclone/agents/farry.py`.
+2. Register Farry as an on-demand session (not continuous) in your daemon-manager.
+3. Add bus event routing for translation/conversion event kinds.
+4. Point model resolution at your tier file (`model-tiering.md`), never a hardcoded model name.
 
 ---
 
 ## See Also
 
 - [larry-setup.md](larry-setup.md) -- Larry (Claude Code) configuration
-- [barry-setup.md](barry-setup.md) -- Barry image agent (similar on-demand pattern)
+- [garry-setup.md](garry-setup.md) -- Garry spatial agent (similar on-demand pattern)
 - [harry-setup.md](harry-setup.md) -- Harry audio agent
+- [model-tiering.md](model-tiering.md) -- Model tier file and resolver functions
 - [agent-capabilities.md](agent-capabilities.md) -- Capability matrix for all agents

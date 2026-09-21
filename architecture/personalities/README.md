@@ -35,10 +35,12 @@ Different personalities can be assigned to different AI models based on their na
 
 | Personality Type | Recommended Model Tier | Rationale |
 |---|---|---|
-| Deep/core personalities | Most capable (e.g., Opus) | Nuance, depth, precision |
-| Fast/verbose personalities | Fast tier (e.g., Haiku) | Speed, generosity, lower cost |
-| Balanced/careful personalities | Mid tier (e.g., Sonnet) | Balance of quality and cost |
-| Gatekeeper | Most capable | Safety-critical, must not miss risks |
+| Deep/core personalities | Orchestrator tier (`default_model()`) | Nuance, depth, precision |
+| Fast/verbose personalities | Bulk tier (`simple_model()`) | Speed, generosity, lower cost |
+| Balanced/careful personalities | Escalation tier (`escalation_model()`) | Balance of quality and cost |
+| Gatekeeper | Orchestrator tier | Safety-critical, must not miss risks |
+
+The smallest available tier is never used, even for the fastest personality. See [docs/model-tiering.md](../../docs/model-tiering.md).
 
 ## Folder Structure
 

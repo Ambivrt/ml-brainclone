@@ -342,6 +342,14 @@ def run(agent: str):
             _write_heartbeat(hb_path, agent, "idle")
             last_hb = now
 
+        # Expired pending tasks (older than their validity window, default
+        # 48h) are moved to failed/ before listing -- a task that missed its
+        # window should never run late, just show up as "expired" in failed/.
+        try:
+            task_lib.sweep_expired_pending(agent)
+        except Exception as e:
+            log.error(f"sweep_expired_pending error: {e}", exc_info=True)
+
         try:
             pending = task_lib.list_pending_for_agent(agent)
         except Exception as e:

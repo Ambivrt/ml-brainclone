@@ -439,7 +439,7 @@ Reference: typical peaks at ~10.6GB RAM, 1.9GB VRAM idle. Full mine ~20 min on R
 
 ## Agent Integration
 
-All four agents in the Larry ecosystem are integrated with MemPalace:
+MemPalace integration reaches well beyond these four; every agent in the ecosystem that reads or writes vault content goes through Milla. A representative slice:
 
 | Agent | Integration | How |
 |-------|-----------|-----|

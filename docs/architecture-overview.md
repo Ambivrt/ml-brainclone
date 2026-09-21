@@ -1,6 +1,6 @@
 # Larry Ecosystem — Architecture Overview
 
-A personal AI second brain consisting of four agents (Larry, Barry, Harry, Parry) orchestrated via Claude Code and an Obsidian vault. Runs locally on a personal machine.
+A personal AI second brain: 12 agents (one orchestrator, three modalities, eight services) and 10 daemons under one watchdog, orchestrated via Claude Code and an Obsidian vault. Runs locally on a personal machine.
 
 ---
 
@@ -43,13 +43,17 @@ Studio  TTS +   Quality scan
 
 ## Agents
 
+The full roster is 12 agents: one orchestrator, three modalities, eight services (see [ARCHITECTURE.md](../ARCHITECTURE.md) for all of them). This page focuses on the agents in the diagram above, the ones that touch the Telegram and mail pipelines directly.
+
 | Agent | Modality | Primary function | Core technology |
 |-------|----------|-----------------|-----------------|
-| **Larry** | Text | Orchestrator, knowledge, planning | Claude (Sonnet/Opus via Claude Code) |
+| **Larry** | Text | Orchestrator, knowledge, planning | Claude Code, see [model-tiering.md](model-tiering.md) |
 | **Barry** | Image | Generation, sorting, visual memory | Venice Studio via Playwright (browser) |
-| **Harry** | Audio | TTS, music, SFX, mixing | Gemini TTS (Vertex AI) + FFmpeg |
+| **Harry** | Audio | TTS, STT, realtime voice, music, dictation | Gemini TTS (Vertex AI) + FFmpeg |
 | **Parry** | Filter | Privacy, tone, quality control | parry.py (Python middleware) |
 | **Telegram** | Multi-modal | Text + photo + voice, async two-way | Telegram Bot API + Gemini vision/STT/TTS + claude -p |
+
+There is no video agent. Farry, one of the eight services, is a live interpreter (translation and format conversion), not a video agent.
 
 ---
 
@@ -84,9 +88,11 @@ User → Larry → harry-tts.py "file.md"
 OS Task Scheduler
   → nattskift-runner.sh (bash)
     → collect-vault-data.sh (collects vault data)
-    → claude --print --model haiku < prompts/batchN.md
+    → claude --print --model $(simple_model()) < prompts/batchN.md
     → Output → 00-inbox/nightly-report-*.md
 ```
+
+The model name is never hardcoded. It comes from `simple_model()` / `simple_effort()`, which read the tier file. Bulk batches run at low effort on the cheapest tier that clears the bar (see [model-tiering.md](model-tiering.md)); nothing runs on the smallest tier.
 
 ### Mail and calendar
 ```
@@ -210,32 +216,24 @@ Parry enforces that L3-4 content never leaks to L1-2 destinations.
 
 ---
 
-## Model Routing (Family Model)
+## Model Routing (Tier File)
 
-| Model | Alias | Usage |
-|-------|-------|-------|
-| Claude Haiku | "Hakke" | Nightly tasks, routine operations, fast responses |
-| Claude Sonnet | "Sonny" | Daily notes, triage, standard work |
-| Claude Opus | "Opus" | Architecture, strategy, deep analysis |
-| Claude Opus 1M | "Opus Max" | Mega-sessions, full vault analysis |
+One JSON file is the single source of truth for every model choice: `default`, `escalation`, `simple`, `cli_fallback`, `on_request`, each with an effort level. Code calls `default_model()`/`simple_model()` (or the effort variants), never a hardcoded model string. Example roster on the reference system as of September 2026:
 
-Fallback on guardrail refusal: Venice (DeepSeek/Qwen, E2EE).
+| Tier | Model | Effort | Usage |
+|------|-------|--------|-------|
+| Orchestrator (`default`) | Opus 4.6 | Medium | Chief of staff, architecture, quality checks, everything a human reads |
+| Bulk (`simple`) | Sonnet 5 | Low | Subagents, translation, graders, KG extraction, vault hygiene, night-shift batches |
+| On request (`on_request`) | Top-tier model | Medium | Specs and code architecture, only when explicitly asked for |
+| CLI fallback (`cli_fallback`) | Sonnet 5 | Medium | Used only when the orchestrator model does not respond |
+
+The smallest available tier is never used. Fallback on guardrail refusal: Venice (DeepSeek/Qwen, E2EE).
 
 ---
 
 ## Nightly Automation
 
-All batches run between 01:00–06:00 only.
-
-| Batch | Time | Model | Task |
-|-------|------|-------|------|
-| Batch 1 | 01:00 | Haiku | Vault hygiene (frontmatter, broken links, orphans) + KG snapshot |
-| Batch 2 | 02:00 | Haiku | Inbox analysis (triage, connection suggestions, stale check) |
-| Batch 3 | 03:00 | Haiku | Reddit/community monitoring (L1-2 only) |
-| Batch 4 | 04:00 | System | Milla mine -- reindex vault (GPU-heavy, never run manually during active session) |
-| Batch 5 | 06:00 | Haiku | Morning brief (summary + vault stats + Reddit digest) |
-| Batch 7 | 04:30 | Haiku | Feedback audit (cross-reference rules vs. nattrapporter) |
-| Batch 8 | 05:00 | Sonnet | Dream batch (cross-session pattern analysis from session logs) |
+Nine batches run overnight, covering vault hygiene, inbox triage, semantic reindex (Milla mine), feedback audit, and cross-session pattern analysis among others. Bulk batches use `simple_model()` at low effort; nothing here calls a model by name directly. The morning brief runs at 05:30, built by deterministic collectors so no model sits in the read path for untrusted mail or web content. See [docs/model-tiering.md](model-tiering.md) for the tier file and [docs/status-file.md](status-file.md) for the status file that replaced daily notes.
 
 ---
 
@@ -246,7 +244,7 @@ All batches run between 01:00–06:00 only.
 3. **Privacy is configuration** — levels control which models MAY be used
 4. **Vault is text-only** — no binary files. Images → assets, Audio → audio
 5. **Robust over quick** — never a hack, always a reliable solution
-6. **Yolo mode** — Larry always runs with `--dangerously-skip-permissions`, and `--remote-control <brain>` is always on
+6. **Yolo mode, under oversight**: Larry runs with `--dangerously-skip-permissions`, and `--remote-control <brain>` is always on, but a rule engine still decides per action whether it waits for a yes, happens with an undo window, or is logged. See [docs/oversight.md](oversight.md)
 7. **Parry guards** — middleware filter on all output, three modes: off/balanced/strict
 
 See [Larry's Ten Commandments](ten-commandments.md) for the full operating principles.

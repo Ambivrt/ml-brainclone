@@ -203,22 +203,24 @@ Complement with question-word matching.
 
 ### 3.5 Model Selection
 
-| Situation | Model | Why |
-|-----------|-------|-----|
-| Default text conversation | `<mid-tier-model>` | Fast, cheap, good enough |
-| Complex question (long, references context) | `<mid-tier-model>` | Sufficient |
-| Creative / emotional / deep | `<top-tier-model>` | Depth needed |
-| Simple ack / short reply | `claude-haiku-4-5-20251001` | Fastest, cheapest |
+All model choices are resolved from the one model-tier file at call time, never hardcoded. See [docs/model-tiering.md](../docs/model-tiering.md).
+
+| Situation | Tier | Why |
+|-----------|------|-----|
+| Default text conversation | `default_model()` | Fast, cheap, good enough |
+| Complex question (long, references context) | `default_model()` | Sufficient |
+| Creative / emotional / deep | `escalation_model()` | Depth needed |
+| Simple ack / short reply | `simple_model()` | Fastest, cheapest |
 
 **Model selection logic:**
 ```python
 def _pick_model(text: str, sentiment: str) -> str:
     words = len(text.split())
     if words <= 3:
-        return "claude-haiku-4-5-20251001"
+        return simple_model()  # bulk tier, resolved from the model-tier file
     if sentiment in ("sad", "angry") or any(kw in text.lower() for kw in DEEP_KEYWORDS):
-        return "<top-tier-model>"
-    return "<mid-tier-model>"
+        return escalation_model()
+    return default_model()
 ```
 
 `DEEP_KEYWORDS` should be configured per deployment — topics that require deeper reasoning (creative writing, emotional support, complex analysis).
@@ -320,7 +322,7 @@ Everything that works today is preserved unchanged:
 
 | Command | Function |
 |---------|---------|
-| `/model` | Show/switch active model. `/model opus`, `/model sonnet`, `/model haiku`, `/model auto` |
+| `/model` | Show/switch active model tier. `/model default`, `/model escalation`, `/model simple`, `/model auto` |
 | `/context` | Show current state: active personality, history length, last memory search |
 | `/forget` | Clear conversation history. Start with clean context |
 | `/memory <query>` | Explicit semantic memory search, returns results directly |
@@ -331,13 +333,13 @@ Everything that works today is preserved unchanged:
 
 Current: keyword matching (`if "damn" in text: return "frustrated"`).
 
-**New:** Use Haiku for sentiment classification as a separate cheap call:
+**New:** sentiment is a classification, not prose, so it is a good fit for a typed decision model sitting outside the text gateway (state and a typed question in, a label and confidence out) instead of a full text-model call. See [docs/decision-gate.md](../docs/decision-gate.md). If you don't have that gate, fall back to a bulk-tier call, resolved via `simple_model()`, never a hardcoded model name:
 
 ```python
 async def _analyze_sentiment_llm(text: str) -> str:
-    """Haiku-based sentiment analysis. ~$0.001 per call."""
+    """Bulk-tier sentiment classification, or route through the decision gate if available."""
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model=simple_model(),
         max_tokens=20,
         system="Analyze sentiment. Reply with ONE word: happy/excited/playful/frustrated/sad/angry/curious/tired/neutral",
         messages=[{"role": "user", "content": text}],
@@ -345,7 +347,7 @@ async def _analyze_sentiment_llm(text: str) -> str:
     return response.content[0].text.strip().lower()
 ```
 
-Fallback to keyword matching if Haiku call fails.
+Fallback to keyword matching if the classification call fails.
 
 ### 5.3 Vault File Reading
 
@@ -371,9 +373,9 @@ def _log_cost(model: str, input_tokens: int, output_tokens: int, cached_tokens: 
     """Log cost in a structured format."""
     # Prices per 1M tokens (update as pricing changes)
     prices = {
-        "<top-tier-model>":  {"input": 15.0, "output": 75.0, "cached": 1.875},
-        "<mid-tier-model>":  {"input": 3.0,  "output": 15.0, "cached": 0.375},
-        "claude-haiku-4-5-20251001": {"input": 0.80, "output": 4.0,  "cached": 0.08},
+        "<escalation-tier-model>": {"input": 15.0, "output": 75.0, "cached": 1.875},
+        "<default-tier-model>":    {"input": 3.0,  "output": 15.0, "cached": 0.375},
+        "<bulk-tier-model>":       {"input": 0.80, "output": 4.0,  "cached": 0.08},
     }
     ...
 ```
@@ -498,7 +500,7 @@ The Telegram adapter is the first implementation. Signal, Matrix, Discord, and P
 - [ ] Vault file reading on-demand
 
 ### Phase 5 — Polish
-- [ ] Upgraded sentiment analysis (Haiku)
+- [ ] Upgraded sentiment analysis (bulk tier or decision gate)
 - [ ] `/forget`, `/memory` commands
 - [ ] Active-context auto-refresh (every 15 min)
 - [ ] Stress tests: 50 messages in sequence, memory usage, token consumption
@@ -550,4 +552,4 @@ These questions are parked for collaborative design. Grouped:
 ### Security & Operations
 16. **Privacy over Telegram** — L3/L4 content must never be sent via Telegram. How to handle explicit requests?
 17. **API key management** — System env var or `.env` file?
-18. **Budget cap** — Daily/monthly limit? Warning at threshold? Auto-switch to Haiku at cap?
+18. **Budget cap**: Daily/monthly limit? Warning at threshold? Auto-switch to the bulk tier at cap?

@@ -53,8 +53,9 @@ One orchestrator. Three senses. Eight organs. Three bones.
 | **Logistics (Carry)** | Transport content in/out/between systems. Pipelines with retry and approval gates. |
 | **Sleep (Darry)** | Night shift 2.0: Light Sleep (quick hygiene), Deep Sleep (heavy processing), REM Sleep (creative insight). Currently in Phase 1 migration mode, running parallel with legacy batch runner. |
 | **Conscience (Scarry)** | Retroactive scanner. Finds what you mentioned but never did. Asks, never instructs. |
-| **Location (Karry)** | Spatial awareness. Position tracking, geo-fences, place intelligence, navigation. Hybrid daemon + MCP server. |
-| **Video (Farry)** | Video understanding, analysis, key moment extraction, clip generation. Multimodal video reasoning. Status: planned. |
+| **Interpreter (Farry)** | Live translation ("Babel fish" mode), machine translation, format conversion (json/yaml/toml/xml/csv). Checks memory first for consistent terminology. |
+
+There is no video agent. A former location agent (Karry) is discontinued; see [docs/karry-setup.md](docs/karry-setup.md) for the hybrid daemon + MCP pattern it left behind, kept here because the pattern is still useful.
 
 All agents handle all four privacy levels. All have access to the freedom router.
 
@@ -102,10 +103,10 @@ TEXT MODE (primary / Larry)
  │   ├─ "Follow up on X tomorrow" → Follow-up scheduled
  │   └─ "Every Monday: X" → Recurring task registered
  │
- ├─ Video task? → Invokes VIDEO MODE (Farry, planned)
- │   ├─ "Analyze this video" → Multimodal understanding
- │   ├─ "Extract key moments" → Timeline analysis
- │   └─ "Generate a clip" → Video generation
+ ├─ Translation task? → Invokes INTERPRETER MODE (Farry)
+ │   ├─ "Translate this live" → Babel fish mode
+ │   ├─ "Convert this to yaml" → Format conversion
+ │   └─ Checks memory first for consistent terminology
  │
  └─ Multi-modal? → Orchestrates sequence
      └─ "Photograph the whiteboard, transcribe,
@@ -121,10 +122,9 @@ Two patterns for extending the ecosystem:
 
 | Pattern | Examples | Process model | Restart |
 |---------|----------|--------------|---------|
-| **Brain** | Tarry, Carry, Darry, Karry, Warry | Long-running process composing capabilities via the brain runtime (`*_brain.py`) | Start script / watchdog |
-| **Daemon** | Parry, Screen-bus | Bus gatekeeper / screen interaction relay, long-running process | Start script / watchdog |
-| **Session** | Garry | Runs on demand, exits when done | Not needed, Larry invokes directly |
-| **Planned** | Farry | On-demand video processing, not yet active | Not needed, invoked by Larry |
+| **Brain** | Tarry, Carry, Darry, Warry | Long-running process composing capabilities via the brain runtime (`*_brain.py`) | Start script / watchdog |
+| **Daemon** | Parry, Screen-bus, Milla-server, Milla-proxy, Bot-listener, Harry-wispr (dictation) | Bus gatekeeper, screen interaction relay, memory server and proxy, Telegram listener, dictation daemon | Start script / watchdog |
+| **Session** | Garry, Farry | Runs on demand, exits when done | Not needed, Larry invokes directly |
 | **Scanner** | Scarry | CLI tool, scheduled or on-demand | Via Darry deep sleep or manual |
 
 Daemons are appropriate for background work that must happen independently of Larry's attention (gating, scheduling). Skills are appropriate for capabilities Larry invokes on demand.
@@ -284,9 +284,18 @@ In practice this is enforced as a **Multi-LLM Inference Gateway**: external mode
 |--------|-------------|------------|
 | **Claude Code (local)** | Full: read, write, agents, memory, skills | Primary daily use |
 | **Claude Code (remote)** | Full: same as local, via SSH/remote session | Away from primary machine |
+| **Remote Control** | Follow and steer a running session from a phone | Always on for interactive sessions, `--remote-control <brain>` |
 | **Obsidian app** | Read, write, graph view, search | Visual browsing, graph exploration |
 | **Obsidian CLI** | Search, create, daily notes | Quick captures from terminal |
 | **Git client (mobile)** | Read, basic edit | On the go (Working Copy, etc.) |
+
+Yolo mode (`--dangerously-skip-permissions`) removes confirmation prompts but does not remove oversight. A rule engine decides per action type whether it waits for a yes (`in_loop`), happens inside an undo window (`on_loop`), or just gets logged (`autonomous`). A hook is the floor for interactive sessions, the privacy/tone gate is the floor for daemons. See [docs/oversight.md](docs/oversight.md).
+
+---
+
+## Code Layout
+
+Four separate places on disk, one job each: the source repository (edit here), a deployed runtime copy (daemons run from here, never edited by hand), binaries, and config plus the semantic memory store. The vault holds only text: specs, architecture, knowledge. Edit in the repo, commit, run the deploy script, it runs the test suite and syncs to runtime. See [docs/code-layout.md](docs/code-layout.md).
 
 ---
 
@@ -413,18 +422,19 @@ Apps emerge when you notice yourself doing the same multi-step task repeatedly a
 | **Larry** | Orchestrator | User / Telegram / mail / CLI | All agents | Claude Code session |
 | **Barry** | Image generation | Larry | Venice (Playwright) | On-demand subprocess |
 | **Harry** | Audio / TTS | Larry | Vertex AI / Whisper | On-demand subprocess |
-| **Milla** | Semantic memory | All agents (via MCP) | ChromaDB | Persistent HTTP/SSE server |
-| **Warry** | Sentiment analysis | Larry / Telegram listener | XLM-RoBERTa (GPU) | Background daemon |
+| **Milla** | Semantic memory | All agents (via MCP) | ChromaDB | Milla-server + Milla-proxy, persistent HTTP/SSE |
+| **Warry** | Sentiment analysis | Larry / Telegram listener | Local GPU model | Background daemon |
 | **Screen-bus** | Screen interaction relay | Larry / external events | Brains-bus | Background daemon |
 | **Parry** | Privacy gatekeeper | Always-on middleware | Larry (flags) | Background daemon |
 | **Tarry** | Time / scheduling | Larry (queue write) | Larry (fires reminders) | Background daemon |
 | **Carry** | Content logistics | Larry / Darry / events | Filesystem, APIs, Playwright | Background daemon |
 | **Darry** | Night processing | Scheduled (nightly) | Larry, Milla, Carry, Scarry | Background daemon |
-| **Scarry** | Procrastination scan | Darry / Larry (on-demand) | Milla, vault | Scheduled script |
-| **Karry** | Location | Always-on daemon + MCP | Google Maps, Nominatim | Background daemon + MCP |
-| **Farry** | Video | Larry (on-demand) | Gemini Omni Flash | On-demand (planned) |
+| **Scarry** | Procrastination scan, open threads | Darry / Larry (on-demand) | Milla, vault | Scheduled script |
+| **Bot-listener** | Telegram intake | External (Telegram) | Larry, notify queue | Background daemon |
+| **Harry-wispr** | Dictation | User (voice) | Harry pipeline | Background daemon |
+| **Farry** | Live translation, format conversion | Larry (on-demand) | Memory (terminology check) | On-demand session |
 
-All inter-agent communication flows through the brains-bus (SQLite). Parry sees all bus events as gatekeeper before they reach their destination.
+All inter-agent communication flows through the brains-bus (SQLite). Parry sees all bus events as gatekeeper before they reach their destination. There is no video agent, and the former location agent (Karry) is discontinued.
 
 ---
 
@@ -477,3 +487,21 @@ See [docs/voice-profile.md](docs/voice-profile.md) for setup, the interview fram
 6. **Text-only vault.** No binary files stored in the vault. Reference external paths for media.
 7. **Git is the source of truth.** No cloud drives. Git push/pull between machines.
 8. **Voice fidelity over volume.** Surface the right rule at the right moment. Three layers beat one file.
+
+---
+
+## What Changed Since July 2026
+
+1. **Oversight, human in the loop.** A rule engine decides per action whether it waits for a yes, happens with an undo window, or is just logged. See [docs/oversight.md](docs/oversight.md).
+2. **The status file replaces daily notes.** A deterministic, code-compiled summary of what waits, what is broken, what is coming, printed at every session start. See [docs/status-file.md](docs/status-file.md).
+3. **A typed decision gate sits outside the text gateway.** State and typed questions in, probabilities out, no text written. Guarded by a privacy ceiling, secret gate, and a hard monthly budget cap. See [docs/decision-gate.md](docs/decision-gate.md).
+4. **Finish the job.** Open threads get picked up unprompted, jobs get receipts, the system suggests new capabilities when it notices a repeated gap. See [docs/finish-the-job.md](docs/finish-the-job.md).
+5. **One memory, in the vault.** Auto-memory lives inside the vault in a superset frontmatter format. Semantic memory, knowledge graph and diary live in MemPalace. See [docs/memory-system.md](docs/memory-system.md).
+6. **Four-way code layout.** Source repo, deployed runtime, binaries, and config are four separate places on disk. See [docs/code-layout.md](docs/code-layout.md).
+7. **Read-only sessions on untrusted input.** Batches and briefs that read mail or web content run without shell or MCP tools. See [docs/security-untrusted-input.md](docs/security-untrusted-input.md).
+8. **One-way mail bridge.** Receipts from an external assistant arrive by mail, parsed by pure code, never read by a model.
+9. **Knowledge-graph guard.** Every fact carries a validity period, checked in two steps before it is trusted.
+10. **Remote Control always on.** Every interactive session can be followed and steered from a phone.
+11. **Scaffold sync.** A script generates this repo's blueprint from the private engine repo, measures drift, and stops on any privacy-gate hit. It never commits or pushes.
+12. **Portability.** No hardcoded user paths, everything via environment variables.
+13. **Memory-stack upgrade.** MemPalace and its vector store were upgraded on GPU wheels, rehearsed against a copy of the palace first. All palace rewrites go through one wrapper that pins the embedding model.

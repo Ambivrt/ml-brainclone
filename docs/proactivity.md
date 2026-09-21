@@ -14,7 +14,7 @@ Three proactivity layers sit on top of dispatch:
                                tasks → creates tasks directly via task_lib
                                (bounded, deduped, capped)
 
-    nightly batch (Haiku)
+    nightly batch (bulk-tier model)
              │
              ▼
     batch3-morgonbrief      ── emits `proactive-trigger` events for
@@ -69,13 +69,15 @@ VAULT_ROOT="$PROJECT" python "$PROJECT/scripts/proactive_scanner.py" --cap 5
 
 ## Layer 2 — nightly brief dispatches
 
-The nightly Haiku batch that produces the morning brief gets a new final step:
-for each actionable "radar" point it identifies, post a `proactive-trigger`
-event on the bus. The event-dispatcher daemon (layer 3) picks it up and
-creates a task file, with dedup + rate limits.
+The nightly batch that produces the morning brief runs on the bulk model
+tier (resolved via `simple_model()`, never a hardcoded name) and gets a new
+final step: for each actionable "radar" point it identifies, post a
+`proactive-trigger` event on the bus. The event-dispatcher daemon (layer 3)
+picks it up and creates a task file, with dedup + rate limits. The morning
+brief itself has since been hardened; see [finish-the-job.md](finish-the-job.md).
 
-This keeps the prompt simple — Haiku doesn't need to know about `task_lib`.
-It just posts a well-formed bus event:
+This keeps the prompt simple, the nightly batch doesn't need to know about
+`task_lib`. It just posts a well-formed bus event:
 
 ```bash
 python bus/brains-bus.py post \
@@ -127,7 +129,7 @@ They run at different cadences and handle different shapes of signal:
 | Layer          | Cadence      | Signal shape                     |
 |----------------|--------------|----------------------------------|
 | session-init   | On-demand    | Point-in-time state of the vault |
-| nightly brief  | Once per day | Curated "radar" from Haiku       |
+| nightly brief  | Once per day | Curated "radar" from the bulk-tier model |
 | bus dispatcher | Continuous   | Real-time events from agents     |
 
 A single "do all the proactivity" module would have to poll everything

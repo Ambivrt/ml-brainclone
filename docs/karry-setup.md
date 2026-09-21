@@ -1,6 +1,8 @@
-# Karry Setup (Location Agent)
+# Karry Setup (Location Agent): Discontinued
 
-Karry is the ecosystem's spatial awareness agent. It tracks position from multiple sources, evaluates geo-fences, and provides place intelligence via MCP tools.
+**Karry is discontinued and is not part of the active agent roster.** This page is kept for one reason: the hybrid daemon + MCP server pattern below is still a useful shape for a background agent that also needs to expose live tools to Larry. Build a location agent from this pattern if you want one, but do not treat it as something the reference system runs today.
+
+Karry was the ecosystem's spatial awareness agent. It tracked position from multiple sources, evaluated geo-fences, and provided place intelligence via MCP tools.
 
 ## Architecture
 

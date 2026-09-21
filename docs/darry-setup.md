@@ -31,7 +31,7 @@ Darry owns the night. From the moment the user goes to sleep until the morning b
 
 **Purpose:** Fast maintenance. Clean, sort, triage. Cheap and quick.
 
-**Model:** Haiku (batch-cheap, fast)
+**Model:** Bulk tier, resolved via `simple_model()`/`simple_effort()` from the one model-tier file, never hardcoded. On the reference system that is Sonnet 5 at low effort. The smallest available tier is never used.
 
 **Default schedule:** 22:00 - 00:00
 
@@ -54,7 +54,7 @@ Darry owns the night. From the moment the user goes to sleep until the morning b
 
 **Purpose:** Heavy processing. Consolidate memories, build structures, repair. GPU-intensive.
 
-**Model:** Sonnet (stronger reasoning) + GPU (embedding indexing)
+**Model:** Escalation tier (`escalation_model()`), a step up from bulk for jobs that need stronger reasoning without needing the orchestrator model, plus GPU for embedding indexing.
 
 **Default schedule:** 00:00 - 04:00
 
@@ -78,7 +78,7 @@ Darry owns the night. From the moment the user goes to sleep until the morning b
 
 **Purpose:** Dream. Find patterns. Create connections no one explicitly asked for. Generate insights.
 
-**Model:** Opus (creative, deep, associative)
+**Model:** Escalation tier (`escalation_model()`), same tier as Deep Sleep. The orchestrator and on-request tiers are reserved for interactive work and explicit requests, not scheduled nightly jobs.
 
 **Default schedule:** 04:00 - 06:00
 
@@ -162,14 +162,14 @@ darry_service.py
   |     Evaluate conditions -> decide which phases run
   |
   |-- run_light_sleep()
-  |     claude --print --model haiku < prompts/light-sleep.md
+  |     claude --print --model $(simple_model()) --effort low < prompts/light-sleep.md
   |
   |-- run_deep_sleep()
-  |     claude --print --model sonnet < prompts/deep-sleep.md
+  |     claude --print --model $(escalation_model()) < prompts/deep-sleep.md
   |     python -m mempalace mine (GPU)
   |
   |-- run_rem_sleep()
-  |     claude --print --model opus < prompts/rem-sleep.md
+  |     claude --print --model $(escalation_model()) < prompts/rem-sleep.md
   |
   |-- compile_morgonbrief()
   |     Summarize all phase outputs
@@ -211,12 +211,14 @@ darry_service.py
     "manual_request": null
   },
   "models": {
-    "light": "haiku",
-    "deep": "sonnet",
-    "rem": "opus"
+    "light": "simple",
+    "deep": "escalation",
+    "rem": "escalation"
   }
 }
 ```
+
+The `models` block names tiers, not model strings. The tier names resolve against the one model-tier JSON file (see [model-tiering.md](model-tiering.md)); nothing here hardcodes a vendor's model name.
 
 All times are local. Conditions are evaluated at the start of each phase — if conditions change mid-night (e.g., Light Sleep discovers many issues), Deep Sleep may activate even if it was initially skipped.
 
@@ -306,7 +308,7 @@ Darry's core advantage over a flat batch runner is adaptive scheduling. The time
           | Archive sweep
           v
 04:00 --- REM SLEEP START (if triggered) --------
-          | Cross-domain analysis (Opus)
+          | Cross-domain analysis (escalation tier)
           | Creative suggestions
           | Pattern recognition
           v
@@ -331,15 +333,15 @@ Darry's core advantage over a flat batch runner is adaptive scheduling. The time
 
 ## Model Selection
 
-Each phase uses a different model, matched to the cognitive load:
+Each phase uses a different tier, matched to the cognitive load, resolved from the one model-tier file rather than a hardcoded name:
 
-| Phase | Model | Rationale |
-|-------|-------|-----------|
-| Light Sleep | Haiku | Fast, cheap. Maintenance tasks do not need deep reasoning |
-| Deep Sleep | Sonnet | Stronger reasoning for knowledge distillation and KG hygiene |
-| REM Sleep | Opus | Creative, associative. Pattern recognition across domains |
+| Phase | Tier | Rationale |
+|-------|------|-----------|
+| Light Sleep | Bulk (`simple`) | Fast, cheap. Maintenance tasks do not need deep reasoning |
+| Deep Sleep | Escalation | Stronger reasoning for knowledge distillation and KG hygiene |
+| REM Sleep | Escalation | Creative, associative. Pattern recognition across domains, still not the orchestrator or on-request tier |
 
-This is configurable in `darry-config.json`. The key insight: you do not need your most expensive model for cleanup tasks, and you do not want your cheapest model doing creative synthesis.
+This is configurable in `darry-config.json`, via tier names, not model strings. The key insight: you do not need your orchestrator model for cleanup tasks, and the smallest available tier is never used, even for maintenance. See [model-tiering.md](model-tiering.md).
 
 ---
 

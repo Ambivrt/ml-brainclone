@@ -286,7 +286,7 @@ eval-gate.jsonl                  (violation patterns)
 nattrapport-feedback-audit.md    (HOT 10 + broken rules)
          |
          v
-  Dream batch (Sonnet, 05:00)
+  Dream batch (bulk model tier)
          |
          v
 00-inbox/nattrapport-dream-YYYY-MM-DD.md

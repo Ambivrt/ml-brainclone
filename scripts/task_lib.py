@@ -16,9 +16,10 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -32,6 +33,12 @@ def _vault_root() -> Path:
 
 AgentName = Literal["larry", "harry", "barry", "parry", "tarry"]
 VALID_AGENTS = ("larry", "harry", "barry", "parry", "tarry")
+
+# Validity window: a task older than this that was never claimed should
+# never run. This is what stops a stale one-off task (e.g. a scheduled
+# action tied to yesterday) from firing a day late just because nothing
+# happened to check on it in time.
+DEFAULT_TASK_TTL_HOURS = 48.0
 
 
 def _inbox() -> Path:
@@ -96,18 +103,25 @@ def create_task(
     from_source: str = "manual",
     priority: str = "normal",
     context: Optional[dict] = None,
+    ttl_hours: float = DEFAULT_TASK_TTL_HOURS,
 ) -> Path:
-    """Create a new pending task file in 00-inbox/."""
+    """Create a new pending task file in 00-inbox/.
+
+    `ttl_hours` sets `expires_at`: a task that never gets claimed within the
+    window never runs (see `is_task_expired`/`sweep_expired_pending`).
+    """
     if agent not in VALID_AGENTS:
         raise ValueError(f"Invalid agent: {agent}. Choose one of {VALID_AGENTS}")
 
     task_id = uuid.uuid4().hex[:8]
-    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    now = datetime.now()
+    ts = now.strftime("%Y%m%d-%H%M%S")
     slug = _slugify(title)
     fname = f"task-{agent}-{ts}-{slug}-{task_id}.md"
     inbox = _inbox()
     inbox.mkdir(parents=True, exist_ok=True)
     path = inbox / fname
+    expires_at = (now + timedelta(hours=ttl_hours)).isoformat(timespec="seconds")
 
     ctx_block = ""
     if context:
@@ -121,7 +135,8 @@ def create_task(
         f"status: pending\n"
         f"priority: {priority}\n"
         f"from_source: {from_source}\n"
-        f"created: {datetime.now().isoformat(timespec='seconds')}\n"
+        f"created: {now.isoformat(timespec='seconds')}\n"
+        f"expires_at: {expires_at}\n"
         f"privacy: 2\n"
         f"---\n\n"
         f"# {title}\n\n"
@@ -132,12 +147,61 @@ def create_task(
     return path
 
 
-def list_pending_for_agent(agent: AgentName) -> list[Path]:
-    inbox = _inbox()
-    if not inbox.exists():
-        return []
+def _candidate_task_files(agent: AgentName) -> list[Path]:
+    """Pending task files for an agent: `00-inbox/` (before a router has
+    moved them) and `_tasks/<agent>/` (its root only, never `processing/`,
+    `done/` or `failed/`, which have their own lifecycle)."""
     out: list[Path] = []
-    for p in inbox.glob(f"task-{agent}-*.md"):
+    inbox = _inbox()
+    if inbox.exists():
+        for p in inbox.glob("task-*.md"):
+            if f"task-{agent}-" in p.name:
+                out.append(p)
+    agent_root = _tasks_root() / agent
+    if agent_root.exists():
+        out.extend(p for p in agent_root.glob("task-*.md") if p.is_file())
+    return out
+
+
+def _parse_dt(raw) -> Optional[datetime]:
+    """Parse an ISO timestamp into a naive, local datetime. None if `raw`
+    is missing or unparsable -- callers should then never assume the time
+    has passed (better one extra pending task than one run on a guess)."""
+    if not raw:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(raw))
+    except ValueError:
+        return None
+    if dt.tzinfo is not None:
+        dt = dt.astimezone().replace(tzinfo=None)
+    return dt
+
+
+def is_task_expired(meta: dict, *, now: Optional[datetime] = None,
+                     default_hours: float = DEFAULT_TASK_TTL_HOURS) -> bool:
+    """True if the task has passed its validity window and must never run.
+
+    `expires_at` (set by `create_task`) is authoritative when present. Older
+    files without the field fall back to `created` + `default_hours`."""
+    now = now or datetime.now()
+    expires = _parse_dt(meta.get("expires_at"))
+    if expires is not None:
+        return expires <= now
+    created = _parse_dt(meta.get("created"))
+    if created is None:
+        return False
+    return created + timedelta(hours=default_hours) <= now
+
+
+def list_pending_for_agent(agent: AgentName) -> list[Path]:
+    """Pending task files for an agent, in `00-inbox/` or `_tasks/<agent>/`.
+
+    Expired tasks are never returned here -- call `sweep_expired_pending(agent)`
+    first (the watcher does this every loop) so a task past its window is
+    never claimed, only moved to failed/."""
+    out: list[Path] = []
+    for p in _candidate_task_files(agent):
         try:
             meta, _ = _parse_frontmatter(p.read_text(encoding="utf-8"))
         except Exception:
@@ -146,6 +210,83 @@ def list_pending_for_agent(agent: AgentName) -> list[Path]:
             out.append(p)
     out.sort(key=lambda p: p.stat().st_mtime)
     return out
+
+
+def sweep_expired_pending(agent: AgentName, *, default_hours: float = DEFAULT_TASK_TTL_HOURS,
+                          now: Optional[datetime] = None) -> list[Path]:
+    """Move `pending` tasks whose validity window has passed to failed/ with
+    status `expired`. Called by the watcher every loop, before it lists
+    pending tasks -- an expired task should never get claimed."""
+    now = now or datetime.now()
+    moved: list[Path] = []
+    for p in _candidate_task_files(agent):
+        try:
+            text = p.read_text(encoding="utf-8")
+            meta, _ = _parse_frontmatter(text)
+        except Exception:
+            continue
+        if meta.get("agent") != agent:
+            continue
+        if meta.get("status", "pending") != "pending":
+            continue
+        if not is_task_expired(meta, now=now, default_hours=default_hours):
+            continue
+
+        dest = _agent_dir(agent, "failed") / p.name
+        text = _append_frontmatter_field(text, "status", "expired")
+        text = _append_frontmatter_field(text, "expired_at", now.isoformat(timespec="seconds"))
+        text += (
+            "\n\n---\n\n## Expired\n\n"
+            f"The validity window ({default_hours:.0f}h) ran out before the task was "
+            "claimed. It will never run late.\n"
+        )
+        try:
+            dest.write_text(text, encoding="utf-8")
+            p.unlink()
+        except Exception:
+            continue
+        moved.append(dest)
+    return moved
+
+
+def triage_stale(*, default_hours: float = DEFAULT_TASK_TTL_HOURS, dry_run: bool = True,
+                 now: Optional[datetime] = None) -> list[dict]:
+    """One-off helper: find every `pending` task, for every agent, that is
+    older than its validity window.
+
+    `dry_run=True` (default) changes nothing, only reports. `dry_run=False`
+    runs `sweep_expired_pending` per agent and the report gets `status_after`."""
+    now = now or datetime.now()
+    report: list[dict] = []
+    for agent in VALID_AGENTS:
+        for p in _candidate_task_files(agent):
+            try:
+                meta, _ = _parse_frontmatter(p.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if meta.get("agent") != agent:
+                continue
+            if meta.get("status", "pending") != "pending":
+                continue
+            if not is_task_expired(meta, now=now, default_hours=default_hours):
+                continue
+            report.append({
+                "agent": agent,
+                "path": str(p),
+                "task_id": meta.get("task_id", p.stem),
+                "created": meta.get("created", ""),
+                "status_before": meta.get("status", "pending"),
+            })
+
+    if not dry_run:
+        moved_names: set[str] = set()
+        for agent in VALID_AGENTS:
+            moved_names.update(d.name for d in
+                               sweep_expired_pending(agent, default_hours=default_hours, now=now))
+        for row in report:
+            row["status_after"] = "expired" if Path(row["path"]).name in moved_names else "unchanged"
+
+    return report
 
 
 def claim_task(path: Path, agent: AgentName) -> Optional[Path]:
@@ -230,3 +371,37 @@ def read_task(path: Path) -> dict:
         "body": body,
         "path": str(path),
     }
+
+
+# ---------------------------------------------------------------------------
+# CLI: python task_lib.py triage-stale [--apply] [--hours N]
+# ---------------------------------------------------------------------------
+
+def _main(argv: list[str]) -> int:
+    import argparse
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+    ap = argparse.ArgumentParser(prog="task_lib.py")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    t = sub.add_parser("triage-stale", help="mark expired pending tasks as expired")
+    t.add_argument("--apply", action="store_true", help="move them to failed/ (default: report only)")
+    t.add_argument("--hours", type=float, default=DEFAULT_TASK_TTL_HOURS)
+
+    ns = ap.parse_args(argv)
+
+    if ns.cmd == "triage-stale":
+        report = triage_stale(default_hours=ns.hours, dry_run=not ns.apply)
+        for row in report:
+            print(json.dumps(row, ensure_ascii=False))
+        verb = "Moved" if ns.apply else "Would move (dry-run, pass --apply to act)"
+        print(f"\n{verb}: {len(report)}")
+        return 0
+
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main(sys.argv[1:]))

@@ -166,7 +166,7 @@ Install via Settings → Community plugins → Browse:
 
 **Settings → Core plugins:**
 - Templates: **Off** (Templater replaces it)
-- Daily notes: **On** — format `YYYY-MM-DD`, folder `00-inbox`
+- Daily notes: **Off** by default. This scaffold ships a daily note template (`templates/daily.md`) for reference, but the reference system retired daily notes in September 2026 in favor of a code-generated status file. Turn daily notes on only if you want that pattern instead. See [docs/status-file.md](docs/status-file.md).
 
 ### 2.6 Install kepano/obsidian-skills (optional)
 
@@ -275,13 +275,15 @@ python 03-projects/parry/parry.py status
 
 Set up scheduled tasks to run vault maintenance overnight:
 
-| Batch | Time | Model | Task |
-|-------|------|-------|------|
-| Batch 1 | 23:00 | Haiku | Vault hygiene (frontmatter, broken links, orphans) |
-| Batch 2 | 01:00 | Haiku | Inbox triage (categorize, suggest connections) |
-| Batch 3 | 06:00 | Haiku | Morning brief (summary + vault stats) |
+| Batch | Time | Model tier | Task |
+|-------|------|------------|------|
+| Batch 1 | 23:00 | Bulk | Vault hygiene (frontmatter, broken links, orphans) |
+| Batch 2 | 01:00 | Bulk | Inbox triage (categorize, suggest connections) |
+| Batch 3 | 06:00 | Bulk | Morning brief (summary + vault stats) |
 
-Uses `scripts/collect-vault-data.sh` to gather data, then `claude --print --model haiku` to analyze.
+"Bulk" means the cheapest model tier that clears the bar for the job, resolved at runtime by `simple_model()`/`simple_effort()` from the one tier file, never hardcoded. On the reference system that tier is Sonnet 5 at low effort; the orchestrator tier (Opus 4.6 at medium effort) is reserved for what a human reads, and the smallest available tier is never used. See [docs/model-tiering.md](docs/model-tiering.md).
+
+Uses `scripts/collect-vault-data.sh` to gather data, then `claude --print --model $(simple_model())` to analyze.
 
 See [docs/larry-setup.md](docs/larry-setup.md) for full nightly automation setup.
 

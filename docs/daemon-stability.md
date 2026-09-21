@@ -874,6 +874,18 @@ This three-layer defense means:
 
 ---
 
+## Automation Watchdog: Did the Job Actually Run
+
+A process watchdog (above) proves a daemon is alive. It says nothing about whether the work you actually depend on happened. A trusted automation, the morning brief, a backup, a sync job, can fail silently upstream of the daemon it runs in: a missing dependency, an empty input file, a task that never got scheduled.
+
+The automation watchdog closes that gap. It checks, once a day, whether each trusted automation produced its expected output in its expected window, and sends a single alert if one did not. This is deliberately separate from the process watchdog: a healthy process and a missing morning brief are two different failures, and conflating them buries the one you actually need to act on. See [docs/status-file.md](status-file.md) for the status file this pattern feeds.
+
+## Evening Shutdown Routine
+
+A scheduled routine that closes the day: flushes anything still open (unsaved drafts, pending confirmations), checks that the day's trusted automations ran or are still scheduled, and leaves a clean state for the night shift to start from. It runs once, at a fixed time in the evening, independent of whether an interactive session is open.
+
+---
+
 ## See Also
 
 - [larry-setup.md](larry-setup.md) -- Larry configuration and startup

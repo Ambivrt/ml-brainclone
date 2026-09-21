@@ -55,7 +55,7 @@ Linked from `HOME.md` so it appears in the daily-use dashboard.
 
 - Personal notes, journal entries, reflections — kept in `01-personal/` or `_private/`
 - Domain knowledge files — `04-knowledge/` stays untouched
-- Daily notes — `00-inbox/YYYY-MM-DD.md` are personal
+- Daily notes, `00-inbox/YYYY-MM-DD.md` are personal, if you use them at all. The reference system retired daily notes in September 2026 in favor of a code-generated status file; see [docs/status-file.md](status-file.md)
 - Project content (creative work, customer files) — has its own project tags (`project/<name>`), not system tags
 - Vendored dependencies — `bin/`, `.venv/`, `node_modules/` should be in `.gitignore` AND excluded from Obsidian via `userIgnoreFilters` in `.obsidian/app.json`
 

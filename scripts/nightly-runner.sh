@@ -77,8 +77,10 @@ run_batch() {
     #   - --strict-mcp-config with no --mcp-config, i.e. zero MCP servers
     #     (no Playwright/browser tools even if project or user config
     #     would otherwise attach them)
-    #   - --add-dir grants read access to the vault and the nightly data
-    #     directory despite permissions not being bypassed
+    #   - --add-dir grants read access to readonly_dirs (default: the vault
+    #     and the nightly data directory) despite permissions not being
+    #     bypassed. Callers that only need a narrower slice can pass a
+    #     smaller readonly_dirs to keep the session's read scope tight.
     #
     # capture_file, when set, redirects the session's stdout (its answer)
     # to that file instead of letting it write output to disk directly.
@@ -91,6 +93,11 @@ run_batch() {
     # -------------------------------------------------------------------
     local restrict_readonly="${5:-false}"
     local capture_file="${6:-}"
+    # readonly_dirs: space-separated directories the read-only session may
+    # read (via --add-dir). Sessions that do not need the whole vault should
+    # get less. Defaults to the previous behavior (vault + nightly dir) so
+    # every existing caller is unaffected.
+    local readonly_dirs="${7:-$VAULT $NIGHTLY_DIR}"
 
     if [ ! -f "$prompt_file" ]; then
         log "ERROR: Prompt file missing: $prompt_file"
@@ -106,7 +113,11 @@ run_batch() {
     local tool_flags=""
     if [ "$restrict_readonly" = "true" ]; then
         perm_flags=""
-        tool_flags="--tools Read,Glob,Grep --strict-mcp-config --add-dir $VAULT --add-dir $NIGHTLY_DIR"
+        tool_flags="--tools Read,Glob,Grep --strict-mcp-config"
+        local readonly_dir
+        for readonly_dir in $readonly_dirs; do
+            tool_flags="$tool_flags --add-dir $readonly_dir"
+        done
     fi
 
     if [ -n "$capture_file" ]; then
@@ -163,7 +174,18 @@ run_morning_brief() {
     if python3 "$SCRIPT_DIR/brief_output.py" "$brief_capture" "$brief_target" >> "$LOGFILE" 2>&1; then
         log "--- Brief written: $brief_target ---"
     else
-        log "--- Brief validation failed, previous file kept (see $brief_target) ---"
+        # Validation failed: the previous valid file on disk is left
+        # untouched, but the raw text is saved instead of just discarded —
+        # otherwise a complete brief vanishes without a trace just because
+        # it got caught in a code fence or similar. Only written when
+        # capture_file actually has content.
+        if [ -s "$brief_capture" ]; then
+            raw_file="$DATA_DIR/morning-brief-$TODAY.raw.txt"
+            cp "$brief_capture" "$raw_file" 2>>"$LOGFILE" || true
+            log "--- Brief validation failed, raw text saved to $raw_file, previous file kept (see $brief_target) ---"
+        else
+            log "--- Brief validation failed, session produced no text, previous file kept (see $brief_target) ---"
+        fi
     fi
     rm -f "$brief_capture"
 

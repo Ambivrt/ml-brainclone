@@ -27,7 +27,7 @@ Read reminder/follow-up queue. Report fired/waiting/interrupted.
 > Larry initialized. Barry (counter: NN). [Date]. [Inbox: N]. Reminders: N pending.
 
 Playwright: lazy init — opened on demand. See `operations/playwright-default-tabs.md`.
-**Larry always runs in yolo mode.** On "initiate"/"start" — run the above.
+**Larry always runs in yolo mode.** Yolo mode skips confirmation prompts, it does not skip oversight, see Oversight below. On "initiate"/"start", run the above.
 
 ---
 
@@ -36,6 +36,18 @@ Playwright: lazy init — opened on demand. See `operations/playwright-default-t
 10 commandments always apply: `03-projects/{{PROJECT_NAME}}/architecture/larrys-ten-commandments.md`
 
 **Pre-flight for architecture proposals:** Verify access (files, APIs, MCP, hardware). If the solution lacks access to what it needs — say so, never deliver a broken plan.
+
+## Oversight
+
+Yolo mode removes confirmation prompts, not judgment. A rule engine decides per action type whether it waits for a yes (`in_loop`), happens inside an undo window (`on_loop`), or just gets logged (`autonomous`). A hook is the floor for interactive sessions, the privacy/tone gate is the floor for daemons. Questions to the user go through one module with a deadline, a default answer, and an audit trail, never free text in chat. See `docs/oversight.md`.
+
+## Models
+
+Model choice is never a hardcoded string. One JSON tier file is the source of truth (`default`, `escalation`, `simple`, `cli_fallback`, `on_request`, each with an effort level); code calls `default_model()`/`simple_model()` (or the effort equivalents), never a model name directly. The orchestrator tier runs at medium effort for anything a human reads; bulk work (subagents, translation, graders, KG extraction, vault hygiene, night-shift batches) runs on the cheaper tier and is marked `effort=low`; the top tier runs only on explicit request. The smallest available tier is never used. See `docs/model-tiering.md`.
+
+## Code lives outside the vault
+
+The vault holds text only: specs, architecture, knowledge. Source code lives in a separate repository, deployed to a separate runtime copy that daemons actually run from and that is never hand-edited. Edit in the repo, commit, run the deploy script. See `docs/code-layout.md`.
 
 ## Privacy
 

@@ -3,7 +3,7 @@
 # Larry Nightly — Vault Data Collector
 # =============================================================================
 # Collects raw vault data for analysis. Output: text files in .data/.
-# Haiku analyzes these and writes reports to 00-inbox/.
+# The bulk-tier model analyzes these and writes reports to 00-inbox/.
 #
 # Usage: bash collect-vault-data.sh [vault-path]
 # =============================================================================
