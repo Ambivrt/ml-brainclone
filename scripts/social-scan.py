@@ -9,6 +9,7 @@ Reddit digest saved separately to 00-inbox/reddit-YYYY-MM-DD.md (for distillatio
 Uses a persistent browser profile (headed mode, never headless).
 """
 
+import json
 import sys
 import logging
 import tempfile
@@ -72,6 +73,29 @@ def launch_browser():
         timeout=30000,
     )
     return pw, context
+
+
+FOCUS_FILE = OUTPUT_DIR / "brief-focus.json"
+
+
+def load_focus() -> dict:
+    """A one-off focus for today's brief, written by a session or the bot:
+    {"date": "YYYY-MM-DD", "x": [...], "linkedin": [...]}. Only today's counts."""
+    try:
+        d = json.loads(FOCUS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return d if isinstance(d, dict) and d.get("date") == datetime.now().strftime("%Y-%m-%d") else {}
+
+
+def merge_terms(base: list, extra: list) -> list:
+    """The standing terms plus today's focus, focus first, no duplicates."""
+    seen, out = set(), []
+    for t in list(extra or []) + list(base):
+        k = str(t).strip().lower()
+        if k and k not in seen:
+            seen.add(k); out.append(str(t).strip())
+    return out
 
 
 def scan_x(context, search_terms):
@@ -488,10 +512,11 @@ def main():
         return 1
 
     try:
-        x_results = scan_x(context, X_SEARCHES)
+        focus = load_focus()
+        x_results = scan_x(context, merge_terms(X_SEARCHES, focus.get("x", [])))
         log.info("X: %d posts", len(x_results))
 
-        linkedin_results = scan_linkedin(context, LINKEDIN_SEARCHES)
+        linkedin_results = scan_linkedin(context, merge_terms(LINKEDIN_SEARCHES, focus.get("linkedin", [])))
         log.info("LinkedIn: %d posts", len(linkedin_results))
 
         all_subs = REDDIT_SUBREDDITS_P1 + REDDIT_SUBREDDITS_P2

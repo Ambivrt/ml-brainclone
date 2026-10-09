@@ -39,9 +39,11 @@ FILE_COUNT=$(wc -l < "$DATA_DIR/all-files.txt")
 echo "  Found $FILE_COUNT markdown files"
 
 # --- 2. Frontmatter analysis ---
+# CR and a UTF-8 BOM are stripped before the comparison. Without that every
+# file saved with CRLF (most of them, on Windows) counts as missing frontmatter.
 > "$DATA_DIR/missing-frontmatter.txt"
 while IFS= read -r file; do
-    first_line=$(head -1 "$file" 2>/dev/null || echo "")
+    first_line=$(head -1 "$file" 2>/dev/null | tr -d '\r' | sed '1s/^\xEF\xBB\xBF//' || echo "")
     if [ "$first_line" != "---" ]; then
         rel="${file#$VAULT/}"
         echo "$rel" >> "$DATA_DIR/missing-frontmatter.txt"
@@ -50,7 +52,22 @@ done < "$DATA_DIR/all-files.txt"
 echo "  Frontmatter: $(wc -l < "$DATA_DIR/missing-frontmatter.txt") files missing frontmatter"
 
 # --- 3. All wikilinks in the vault ---
-xargs -d '\n' grep -ohE '\[\[[^]|#]+' < "$DATA_DIR/all-files.txt" 2>/dev/null \
+# Code fences (``` and ~~~) and inline code are skipped. They hold type hints
+# (Callable[[dict, float], bool]) and examples of the syntax (`[[link]]`), not
+# links. Without the filter they show up as broken every night.
+xargs -d '\n' awk '
+    FNR==1 { fence=0 }
+    /^[[:space:]]*(```|~~~)/ { fence=!fence; next }
+    fence { next }
+    {
+        line=$0
+        gsub(/`[^`]*`/, "", line)
+        while (match(line, /\[\[[^]|#]+/)) {
+            print substr(line, RSTART, RLENGTH)
+            line=substr(line, RSTART+RLENGTH)
+        }
+    }
+' < "$DATA_DIR/all-files.txt" 2>/dev/null \
     | sed 's/\[\[//' \
     | sort -u > "$DATA_DIR/all-wikilinks.txt" || true
 echo "  Wikilinks: $(wc -l < "$DATA_DIR/all-wikilinks.txt") unique link targets"

@@ -117,5 +117,7 @@ A daily report over the shadow log, grouped by source and by verdict, with the m
 
 ## See also
 
+- `docs/system-one.md` — escalate and fit, the decision trail, shadow to hybrid to live, and the foreman shadow over the night shift
+
 - [oversight.md](oversight.md) for the layer that governs what happens once something is judged worth surfacing to you
 - [model-tiering.md](model-tiering.md) for a related pattern of routing by intent rather than hardcoding a specific model

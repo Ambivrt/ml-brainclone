@@ -2,6 +2,12 @@
 # Polls every 60 seconds, restarts any daemon whose PID file is missing or stale.
 # Run as a background process via larry-start.ps1 or Task Scheduler.
 #
+# Never restarted:
+#   - a daemon with a <name>.disabled flag in .notifications/
+#   - a part switched off in the control room (data/web/parts-off.json, {"off": ["wispr"]})
+#   - a part resting in game mode (data/web/game-mode.json, {"on": true, "parts": [{"id": "milla"}]})
+# Without the last two, the watchdog restarts within a minute what the owner just turned off.
+#
 # Configure $VaultPath and the $daemons registry below.
 
 param(
@@ -25,7 +31,7 @@ $env:PYTHONIOENCODING = "utf-8"
 
 # === Daemon registry ===
 # Customize: add your own daemons here.
-# Each entry needs Name, PidFile, LockFile (optional), Script, and WorkDir.
+# Each entry needs Name, PidFile, LockFile (optional), Script, WorkDir, and Args (optional).
 $daemons = @(
     @{
         Name     = "Parry"
@@ -62,7 +68,51 @@ $daemons = @(
         Script   = Join-Path $VaultPath "agents\event_dispatcher.py"
         WorkDir  = Join-Path $VaultPath "agents"
     }
+    # One task watcher per agent, same script. Keep this list in step with the
+    # start script: a watcher missing here was down for weeks before anyone noticed.
+    @{
+        Name     = "Task-watcher-larry"
+        PidFile  = "task-watcher-larry.pid"
+        LockFile = "task-watcher-larry.lock"
+        Script   = Join-Path $VaultPath "agents\agent_task_watcher.py"
+        Args     = "--agent larry"
+        WorkDir  = Join-Path $VaultPath "agents"
+    }
+    @{
+        Name     = "Task-watcher-barry"
+        PidFile  = "task-watcher-barry.pid"
+        LockFile = "task-watcher-barry.lock"
+        Script   = Join-Path $VaultPath "agents\agent_task_watcher.py"
+        Args     = "--agent barry"
+        WorkDir  = Join-Path $VaultPath "agents"
+    }
 )
+
+# Parts the owner switched off or that rest in game mode. Ids are the daemon name in lowercase.
+$WebDataDir = Join-Path $VaultPath "data\web"
+function Get-RestingParts {
+    $out = @()
+    $off = Join-Path $WebDataDir "parts-off.json"
+    if (Test-Path $off) {
+        try { $out += @((Get-Content $off -Raw -Encoding UTF8 | ConvertFrom-Json).off | ForEach-Object { "$_".ToLower() }) } catch { }
+    }
+    $gm = Join-Path $WebDataDir "game-mode.json"
+    if (Test-Path $gm) {
+        try {
+            $g = Get-Content $gm -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($g.on -eq $true) { $out += @($g.parts | ForEach-Object { "$($_.id)".ToLower() }) }
+        } catch { }
+    }
+    return $out
+}
+
+# Cloud credentials guard: everything that goes through a cloud SDK dies quietly
+# when the credentials file disappears (an OS reinstall is enough). File check
+# only, no network call. Logged once per change, not every minute.
+function Test-CloudCredentials {
+    if ($env:GOOGLE_APPLICATION_CREDENTIALS) { return (Test-Path $env:GOOGLE_APPLICATION_CREDENTIALS) }
+    return (Test-Path (Join-Path $env:APPDATA "gcloud\application_default_credentials.json"))
+}
 
 function Write-Log {
     param([string]$Msg)
@@ -98,7 +148,9 @@ function Restart-Daemon {
     Clear-StaleFiles -PidFile $Daemon.PidFile -LockFile $Daemon.LockFile
     $dname = $Daemon.Name.ToLower()
     $errFile = Join-Path $NotifDir "$dname.log.err"
-    $proc = Start-Process -FilePath "pythonw" -ArgumentList $Daemon.Script -WorkingDirectory $Daemon.WorkDir -WindowStyle Hidden -PassThru -RedirectStandardError $errFile
+    $argList = @($Daemon.Script)
+    if ($Daemon.Args) { $argList += ($Daemon.Args -split ' ') }
+    $proc = Start-Process -FilePath "pythonw" -ArgumentList $argList -WorkingDirectory $Daemon.WorkDir -WindowStyle Hidden -PassThru -RedirectStandardError $errFile
     Start-Sleep -Milliseconds 800
     if ($proc.HasExited) {
         return $false
@@ -111,9 +163,22 @@ $watchdogPid = Join-Path $NotifDir "watchdog.pid"
 "$PID" | Out-File -FilePath $watchdogPid -Encoding ascii -NoNewline
 
 Write-Log "started (pid=$PID), poll=60s"
+$credsOk = $null
 
 while ($true) {
+    $now = Test-CloudCredentials
+    if ($credsOk -ne $null -and $now -ne $credsOk) {
+        if ($now) { Write-Log "cloud credentials back" } else { Write-Log "CLOUD CREDENTIALS MISSING -- every cloud SDK call will fail" }
+    } elseif ($credsOk -eq $null -and -not $now) {
+        Write-Log "CLOUD CREDENTIALS MISSING -- every cloud SDK call will fail"
+    }
+    $credsOk = $now
+
+    $resting = @(Get-RestingParts)
     foreach ($d in $daemons) {
+        $dkey = $d.Name.ToLower()
+        if (Test-Path (Join-Path $NotifDir "$dkey.disabled")) { continue }
+        if ($resting -contains $dkey) { continue }
         $alive = Test-DaemonAlive -PidFile $d.PidFile
         if (-not $alive) {
             $dname = $d.Name

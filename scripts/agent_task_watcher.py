@@ -39,6 +39,8 @@ from pathlib import Path
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE))
 import task_lib  # noqa: E402
+import idempotency  # noqa: E402
+from claude_headless import MCP_WAIT_TOOLS, headless_env  # noqa: E402
 import session_pool  # noqa: E402
 
 BUS_DIR = os.environ.get("BRAINS_BUS_DIR")
@@ -116,19 +118,53 @@ def _run_subprocess(cmd: list[str], cwd: Path | None = None) -> dict:
                 "detail": "", "error": str(e)}
 
 
-def _run_claude_session(agent: str, prompt: str, cwd: str) -> dict:
+def _attempt(task: dict) -> str:
+    try:
+        return str(int(task.get("meta", {}).get("attempts", 1)) or 1)
+    except (TypeError, ValueError):
+        return "1"
+
+
+def _tools_of(task: dict) -> list[str] | None:
+    """A tool profile from the task's frontmatter (`tools: [Read, Grep, Edit]`), or None.
+    None means full access. A list means only those tools, everything else denied."""
+    t = task.get("meta", {}).get("tools")
+    if isinstance(t, str):
+        t = [x.strip() for x in t.strip("[]").split(",") if x.strip()]
+    return t or None
+
+
+def _run_claude_session(agent: str, prompt: str, cwd: str, task_id: str = "?", attempt: str = "1",
+                        allowed_tools: list[str] | None = None) -> dict:
     """CLI dispatch with session pooling and JSON output.
 
     Reuses --resume sessions to skip CLI boot overhead. Falls back to a
     cold start if the session is invalid. Tracks failures and auto-clears
     after MAX_FAILURES consecutive errors (see session_pool.py).
+
+    Model and effort for unattended routine work come from ROUTINE_MODEL and
+    ROUTINE_EFFORT, never from the most expensive tier by habit.
+
+    task_id and attempt go into the environment as the idempotency scope, so
+    mail sent by the executor gets one key per send and a rerun after a lost
+    receipt never sends it again (idempotency.py).
+
+    allowed_tools: None gives full access (--dangerously-skip-permissions). A
+    list maps to --allowedTools with --permission-mode dontAsk, so a tool
+    outside the profile is denied at once instead of hanging on a prompt
+    nobody can answer: tasks never run interactively.
     """
     sid = session_pool.get_session_id(agent)
     claude = os.environ.get("CLAUDE_BIN", "claude")
 
-    cmd = [
-        claude, "--print",
-        "--dangerously-skip-permissions",
+    cmd = [claude, "--print"]
+    if allowed_tools:
+        cmd += ["--allowedTools", ",".join(allowed_tools), "--permission-mode", "dontAsk"]
+    else:
+        cmd += ["--dangerously-skip-permissions"]
+    cmd += [
+        "--model", os.environ.get("ROUTINE_MODEL", "opus"),
+        "--effort", os.environ.get("ROUTINE_EFFORT", "medium"),
         "--output-format", "json",
         "-p", prompt,
     ]
@@ -142,6 +178,11 @@ def _run_claude_session(agent: str, prompt: str, cwd: str) -> dict:
             cmd, capture_output=True, text=True,
             timeout=TASK_TIMEOUT_S, encoding="utf-8", errors="replace",
             cwd=cwd,
+            # Nobody waits for a task: patient backoff when the API is overloaded
+            env=headless_env(MCP_WAIT_TOOLS, {
+                "IDEMPOTENCY_SCOPE": f"task:{task_id}",
+                "IDEMPOTENCY_ATTEMPT": str(attempt),
+            }, patient=True),
         )
         output = (proc.stdout or "").strip()
         err = (proc.stderr or "").strip()
@@ -150,7 +191,7 @@ def _run_claude_session(agent: str, prompt: str, cwd: str) -> dict:
             if sid and ("session" in err.lower() or "not found" in err.lower()):
                 log.warning(f"[{agent}] invalid session, retrying cold")
                 session_pool.clear_session(agent)
-                return _run_claude_session(agent, prompt, cwd)
+                return _run_claude_session(agent, prompt, cwd, task_id, attempt, allowed_tools)
             session_pool.update_session(agent, sid or "", False)
             return {"success": False, "summary": f"exit {proc.returncode}",
                     "detail": output[:2000], "error": err[:1000]}
@@ -191,7 +232,8 @@ def executor_larry(task: dict) -> dict:
         "Do the work. Reply with a short (max 3 sentences) summary of what "
         "you did or what blocked you."
     )
-    return _run_claude_session("larry", prompt, str(_vault_root()))
+    return _run_claude_session("larry", prompt, str(_vault_root()), task["meta"].get("task_id", "?"),
+                               _attempt(task), _tools_of(task))
 
 
 def executor_harry(task: dict) -> dict:
@@ -206,7 +248,8 @@ def executor_harry(task: dict) -> dict:
         f"DESCRIPTION:\n{desc}\n\n"
         "Do the work. Short summary back (max 3 sentences)."
     )
-    return _run_claude_session("harry", prompt, harry_dir)
+    return _run_claude_session("harry", prompt, harry_dir, task["meta"].get("task_id", "?"),
+                               _attempt(task), _tools_of(task))
 
 
 def executor_barry(task: dict) -> dict:
@@ -217,8 +260,17 @@ def executor_barry(task: dict) -> dict:
     if not barry_script or not Path(barry_script).exists():
         return {"success": False, "summary": "BARRY_SCRIPT env var not set or missing",
                 "detail": "", "error": "BARRY_SCRIPT unresolved"}
+    # Generation costs credits. The key is stored before the call, so a job rerun
+    # after a lost receipt neither generates nor pays a second time.
+    key = f"task:{task['meta'].get('task_id', '?')}:barry-generate"
+    if not idempotency.claim(key, kind="barry", meta={"title": title}):
+        return {"success": False, "summary": "Barry already started in an earlier attempt. Not rerun.",
+                "detail": "", "error": f"idempotency key {key} exists, check Barry's inbox"}
     cmd = [sys.executable, barry_script, prompt_text]
-    return _run_subprocess(cmd)
+    result = _run_subprocess(cmd)
+    if result.get("success"):
+        idempotency.confirm(key)
+    return result
 
 
 def executor_parry(task: dict) -> dict:

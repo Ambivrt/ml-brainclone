@@ -217,6 +217,35 @@ Both `executor_larry` and `executor_harry` in `agent_task_watcher.py` use sessio
 
 ---
 
+## Side effects run at most once
+
+The queue is at-least-once: if the receipt dies after the work succeeded, the lease runs out and the task runs again. Harmless for local files, a double charge for mail, chat messages and paid generation.
+
+The watcher puts `IDEMPOTENCY_SCOPE=task:<id>` and `IDEMPOTENCY_ATTEMPT=<n>` in the executor's environment. Everything that leaves the machine claims a key before the call (`scripts/idempotency.py`): the n-th send to the same recipient in attempt 2 collides with the n-th in attempt 1. A sequence number, not a content hash, because a model rerunning a job never phrases things the same way twice.
+
+- **Before the call:** `claim(key)`. Already pending or done: skip.
+- **Certain success:** `confirm(key)`.
+- **Certain failure** (the call never left): `release(key)`, a rerun may try again.
+- **Timeout or unknown:** leave it pending. Better one missing mail than two.
+
+`scripts/gws_mailer.py` does this for every send. Image generation in the Barry executor does it for the whole job, because credits are spent per call.
+
+---
+
+## Captured remotely, started only by a session
+
+A task typed on the phone or captured from the web app is created with `session_only=True`: status `draft`, `start: session`, and no approval question. The watcher lists `pending` only, so it never picks it up. Only an interactive session with the owner starts it. The watcher runs with a full shell, and nothing typed remotely should reach that shell unattended, not even through a "yes" answered from the phone.
+
+---
+
+## Tool profiles
+
+A task can carry `tools: [Read, Grep, Edit]` in its frontmatter. The executor then runs `claude --print --allowedTools Read,Grep,Edit --permission-mode dontAsk`: anything outside the profile is denied at once instead of hanging on a permission prompt that nobody can answer headless. Without a profile the executor runs with full access, as before. A small classifier can pick the profile before the task starts (`docs/system-one.md`); an empty or failed pick always falls back to the explicit profile or none.
+
+Unattended routine work runs on `ROUTINE_MODEL` / `ROUTINE_EFFORT` (medium by default), never on the most expensive tier by habit, and with patient backoff when the API is overloaded (`scripts/claude_headless.py`).
+
+---
+
 ## Files
 
 ```
@@ -228,4 +257,4 @@ notifications/larry_bot_listener.py
                                 — dispatch_task tool + result subscriber thread
 ```
 
-See the reference implementations in `scripts/task_lib.py`, `scripts/agent_task_watcher.py`, and `scripts/session_pool.py`.
+See the reference implementations in `scripts/task_lib.py`, `scripts/agent_task_watcher.py`, `scripts/session_pool.py`, `scripts/idempotency.py` and `scripts/claude_headless.py`.

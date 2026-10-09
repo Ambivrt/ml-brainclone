@@ -1,0 +1,2 @@
+# Shell scripts keep LF on every checkout. With CRLF, bash reads the CR as part of each line and fails.
+*.sh text eol=lf

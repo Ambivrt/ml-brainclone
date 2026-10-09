@@ -109,7 +109,7 @@ Use gws CLI ALWAYS for mail/calendar/drive — never MCP plugins for these.
 
 ## Windows Terminal Startup (Windows)
 
-Run each agent (Larry/Barry/Harry/Parry) in its own dedicated Windows Terminal window.
+Run each brain session (Larry/Barry/Harry/Garry) in its own Windows Terminal window. The daemon stack is separate: `scripts/stack-start.ps1` starts it, `scripts/stack-stop.ps1` stops it, and `scripts/watchdog.ps1` keeps it up.
 
 ```powershell
 # Start all agent windows (skips already-open ones)
@@ -127,16 +127,20 @@ Positions are saved to `scripts/window-positions.json` and applied automatically
     "name": "Larry",
     "suppressApplicationTitle": true,
     "tabTitle": "Larry",
-    "commandline": "powershell.exe -NoExit -Command \"larry\"",
+    "commandline": "claude --remote-control larry",
     "colorScheme": "Larry Cyan"
 }
 ```
 
 `suppressApplicationTitle: true` prevents the shell from overriding the title set by `--title`.
 
+Model and effort belong in the vault's `.claude/settings.json` (`model`, `effortLevel`), one place for every session. A `--model` or `--effort` flag in a terminal profile, or `CLAUDE_CODE_EFFORT_LEVEL` in the environment, silently overrides it. `--remote-control <name>` makes each session reachable from the phone.
+
 | Script | Function |
 |--------|---------|
-| `scripts/larry-startup.ps1` | Starts 4 WT windows with correct profile + saved position |
+| `scripts/larry-startup.ps1` | Opens one WT window per brain session with profile + saved position |
+| `scripts/stack-start.ps1` | Starts daemons and local web apps. `-Only`, `-Force`, parts switched off in the control room are skipped |
+| `scripts/stack-stop.ps1` | Stops the stack: watchdog first, memory server gracefully, spares Claude session MCP servers |
 | `scripts/larry-save-positions.ps1` | Saves positions using Win32 EnumWindows API |
 | `scripts/window-positions.json` | Saved X/Y/W/H per agent (auto-generated, gitignored) |
 

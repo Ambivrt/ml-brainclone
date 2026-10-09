@@ -37,6 +37,16 @@ FALLBACK_PATH = VAULT_ROOT / "_private" / "diary-pending.jsonl"
 # reproducing it. Lives next to the fallback queue.
 ERROR_LOG_PATH = VAULT_ROOT / "_private" / "diary-write-errors.log"
 
+# Web chat sessions (the control-room web app spawns Claude with WEB_CHAT=1) are
+# not the owner's terminal session. The automatic entry speaks in the owner's
+# name and summarises the vault's git state, so it is skipped for them. An
+# explicit entry is still written.
+WEB_CHAT_ENV = "WEB_CHAT"
+
+
+def is_web_chat() -> bool:
+    return os.environ.get(WEB_CHAT_ENV) == "1"
+
 # A hook does not get the whole session's budget, but a request timeout that
 # is too short trips exactly on the slow tail of a loaded memory server —
 # "the server actually wrote it, the client just gave up". A short second
@@ -154,6 +164,9 @@ def write_diary(entry: str | None = None) -> bool:
     to the pending queue with a `reason` field, so the cause is visible
     without digging through logs."""
     if not entry:
+        if is_web_chat():
+            print("Diary skipped: web session (WEB_CHAT=1)")
+            return False
         activity = _get_session_activity()
         entry = _build_entry(activity)
 

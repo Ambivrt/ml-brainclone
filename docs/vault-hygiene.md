@@ -56,11 +56,15 @@ Archiving it to `06-archive/inbox/` feels tidy and is a mistake. It creates a fo
 
 Three exits, no fourth:
 
-1. Moved to a topic folder, because the content is worth keeping
-2. Deleted, because it was an auto-generated report that has served its purpose
-3. Acted on, then deleted
+1. Moved to a topic folder, because the content is worth keeping. An auto-generated report that has served its purpose goes to `06-archive/<type>/YYYY-MM/`, typed by its filename prefix, never to an `inbox` bucket
+2. Deleted, because nothing in it is worth keeping
+3. Acted on, then moved or deleted
 
-Auto-generated files should be identifiable from the filename alone so a reaper can clean them without judgment calls. Give them a `status` in frontmatter, and let `status: active` or `pinned: true` protect anything that must survive.
+Auto-generated files should be identifiable from the filename alone so a reaper can archive them without judgment calls. Give them a `status` in frontmatter, and let `pinned: true` protect anything that must survive. `status: active` protects nothing: templates set it.
+
+The archive follows the content's privacy level, not the folder the file passed through. A report with `privacy: 3` or `4` goes to `_private/06-archive/`. The first version never read the field, and a level 3-4 night report landed in the shared archive.
+
+Knowledge-graph update files leave the inbox as soon as they are applied: the graph keeps its own timeline. A file with lines the owner still has to decide stays, whatever its age. An age rule that only checks `pinned` would have archived dozens of open decisions in one night.
 
 See `scripts/inbox_reaper.py`.
 
@@ -143,7 +147,7 @@ That contract only holds if something enforces it. A pre-commit hook that refuse
 
 | When | What |
 |------|------|
-| Nightly, before anything else | Inbox reaper. Delete expired auto-reports so the day's triage starts from a real number |
+| Nightly, before anything else | Inbox reaper. Archive expired auto-reports so the day's triage starts from a real number |
 | Nightly | Frontmatter and privacy check across the vault |
 | Weekly | Filename collision scan and duplicate content hash scan |
 | After any bulk move | Both scans, plus a broken wikilink check, plus `git ls-files` on private paths |

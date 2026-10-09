@@ -22,9 +22,11 @@ from pathlib import Path
 VAULT = Path(os.environ.get("VAULT_PATH", "."))
 TRANSCRIPT_LOG = VAULT / "_private" / "live-transcript-log.md"
 
+# Level 3: verbatim voice conversations, any topic. Not level 4: it is what was
+# said, not patterns about the owner. The level follows the content, not the folder.
 _HEADER = (
-    "---\ntags: [voice, level4]\nstatus: active\n"
-    f"created: {datetime.now().strftime('%Y-%m-%d')}\nprivacy: 4\n---\n\n"
+    "---\ntags: [system/agent/harry]\nstatus: active\n"
+    f"created: {datetime.now().strftime('%Y-%m-%d')}\nprivacy: 3\n---\n\n"
     "# Live Transcript Log\n\n"
 )
 

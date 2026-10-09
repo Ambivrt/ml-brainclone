@@ -11,6 +11,14 @@
 
 VAULT="${VAULT_PATH:-.}"
 
+# Session activity marker: the temporal agent reads it to know the owner is at
+# the keyboard. Web chat sessions (WEB_CHAT=1) are not the owner's terminal
+# session and do not write it.
+if [ "${WEB_CHAT:-}" != "1" ]; then
+  mkdir -p "$VAULT/_private"
+  echo "{\"session_start\": \"$(date -Iseconds)\", \"pid\": $$}" > "$VAULT/_private/cli-session.json"
+fi
+
 echo "=== LARRY SESSION INIT ==="
 echo ""
 

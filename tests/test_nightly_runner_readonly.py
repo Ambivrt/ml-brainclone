@@ -135,3 +135,21 @@ def test_no_call_site_still_calls_run_batch_3_directly():
     direct_calls = re.findall(r'^\s*run_batch 3 "Morning brief"[^\n]*', SOURCE, re.MULTILINE)
     assert len(direct_calls) == 1, direct_calls  # only inside run_morning_brief
     assert direct_calls[0] in RUN_MORNING_BRIEF_BODY
+
+
+# --- no step gets full bypass without a stated reason -----------------------
+
+def test_every_unhardened_call_states_why_it_needs_bypass():
+    """run_batch without restrict_readonly, and run_workflow, run with
+    --dangerously-skip-permissions. Each such call line must carry a
+    `# bypass:` comment saying what the session writes and what it reads.
+    A new batch added without one fails here instead of quietly getting a
+    full shell."""
+    calls = re.findall(r'^\s*(run_batch|run_workflow) [^\n]*$', SOURCE, re.MULTILINE)
+    lines = [ln for ln in SOURCE.splitlines()
+             if re.match(r'^\s*(run_batch|run_workflow) ', ln)]
+    assert lines, "Found no batch calls"
+    for ln in lines:
+        if '"true" "$brief_capture"' in ln:
+            continue  # the read-only morning brief
+        assert "# bypass:" in ln, ln

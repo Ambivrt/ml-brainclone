@@ -163,12 +163,21 @@ def _scan_notify_queue(dedup, dispatched, dry_run, cap):
         text = (msg.get("text") or "").strip()
         if not text or len(text) < 20:
             continue
-        lower = text.lower()
+        # A classifier upstream (the bot listener) may already have routed the
+        # message and tagged it `route_to`. A known agent is used as is. Any other
+        # value is the classifier's own "nothing for an agent" verdict and is not
+        # routed at all. Only a missing tag falls back to the keyword scan.
+        route = msg.get("route_to")
         chosen = None
-        for agent, keywords in ACTION_KEYWORDS.items():
-            if any(kw in lower for kw in keywords):
-                chosen = agent
-                break
+        if route is not None:
+            if route in ACTION_KEYWORDS:
+                chosen = route
+        else:
+            lower = text.lower()
+            for agent, keywords in ACTION_KEYWORDS.items():
+                if any(kw in lower for kw in keywords):
+                    chosen = agent
+                    break
         if not chosen:
             continue
         title = f"Follow up on message: {text[:60]}"
@@ -222,6 +231,10 @@ def _scan_failed_tasks(dedup, dispatched, dry_run, cap):
         for p in d.glob("task-*.md"):
             try:
                 if datetime.fromtimestamp(p.stat().st_mtime) < cutoff:
+                    continue
+                # Expired tasks are moved to failed/ too. They have no error to
+                # diagnose and must not spawn a diagnosis task of their own.
+                if re.search(r"^status:\s*expired\s*$", p.read_text(encoding="utf-8"), re.M):
                     continue
                 failed.append(p)
             except Exception:

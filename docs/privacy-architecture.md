@@ -21,6 +21,10 @@ The vault is complete and local. No separate vaults for private vs public — th
 
 **Important:** The GitHub repo is private. L3-4 is not publicly exposed — but should be treated as if it could be, for future-proofing.
 
+**The level describes the content, not the place.** L3 and L4 live under `_private/`, but `_private/` is not a promise that everything in it is L3. A day's distillate, an operational log or a sent-mail copy can be plain L2 and sit in `_private/` for practical reasons. The first version of the audit forced every file under `_private/` to level 3 and "fixed" mismatches mechanically: the levels then said where a file lived, not what it held, and every downstream decision built on them inherited the error. The audit now accepts any valid level under `_private/` and only flags level 3-4 **outside** it.
+
+Explicit is L3: health, money, relationships, things you would say out loud only to a few. L4 is what the system observes about you that you do not see yourself: patterns, the unsaid. When software computes a level from free text, it reads the text (see `content_level` below), never the folder.
+
 ---
 
 ## Folder Structure (_private/)
@@ -44,12 +48,12 @@ All notes should have a `privacy` field:
 ---
 privacy: 1   # Open
 privacy: 2   # Personal
-privacy: 3   # Private (_private/ required)
-privacy: 4   # Subconscious (_private/ required)
+privacy: 3   # Private (must live under _private/)
+privacy: 4   # Subconscious (must live under _private/)
 ---
 ```
 
-Files in `_private/` without `privacy: 3` or `privacy: 4` are flagged as violations by Parry.
+A level 3-4 file outside `_private/` is a violation. A file under `_private/` without a valid level (1-4) is flagged for a human to set. Its level is never defaulted to 3 by a script.
 
 ---
 
@@ -238,6 +242,26 @@ failure.
 
 Lock both exclusions with tests. The test that matters is not that the right
 files are found, it is that the private ones are absent from the result.
+
+---
+
+## Privacy follows from read to write
+
+Path rules and the `privacy` field protect a file where it lies. They do not stop a generator that reads L3-L4 and writes a summary into an L1 file: the writer sets the level itself and nothing checks it. Taint checks it.
+
+Each session carries the highest level it has read. A write must not land in a place, or under a declared level, below that.
+
+| Term | Meaning |
+|------|---------|
+| source level | the declared `privacy` of what was read. A file under `_private/` without a level counts as L3. Files without a level outside it (code, json) do not taint |
+| target ceiling | the most a place may hold: `_private/` and purely local roots (temp, runtime) hold L4 unless the file declares lower. A public repo holds L1. Everything else that syncs (the vault's shared half, private git repos) holds at most L2 |
+| breach | highest level read > target ceiling |
+
+Two entry points: a `PostToolUse` hook on Read/Grep that records levels, and a `PreToolUse` hook on Edit/Write that compares. Code that writes notes passes its sources to the note writer and gets the same check.
+
+Roll it out in shadow first: log breaches, block nothing. Then enforce for headless sessions only (daemons, the night shift, the task watcher). An interactive session is not checked at all: the owner sits there and is the "yes" a downgrade needs, and file-level checks only produced false alarms there. Known holes: reads through the shell (`cat`, `rg`) and answers from the memory server are not seen, and taint sticks per session id, which a pooled executor reuses.
+
+`content_level(text)` is the other half: when something writes free text whose level nobody declared (a task, a mail copy, a capture from the phone), the level is computed from the text, falling back to L3 when unsure.
 
 ---
 

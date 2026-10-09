@@ -1,8 +1,8 @@
 # ml-brainclone
 
-A scaffold for building a personal AI second brain using **Claude Code** and **Obsidian**.
+A scaffold for building a personal AI second brain using **Claude Code** and a plain markdown vault.
 
-Larry is an AI-powered personal knowledge system that combines an Obsidian vault with Claude Code as the primary interface, plus specialized agents for image generation, audio/TTS, and privacy enforcement. Everything runs locally on your machine.
+Larry is an AI-powered personal knowledge system that combines a markdown vault (any editor works; Obsidian is optional, not part of the stack) with Claude Code as the primary interface, a local web control room, plus specialized agents for image generation, audio/TTS, and privacy enforcement. Everything runs locally on your machine.
 
 ---
 
@@ -66,7 +66,11 @@ ml-brainclone/
 │   ├── collect-calendar.py           <- Deterministic calendar fetch (no LLM in the loop) for the morning brief
 │   ├── prompts/batch3-morning-brief.md <- Example morning brief prompt with the untrusted-data section
 │   ├── system_tag_batch.py           <- Path-based system/* tagging (idempotent), see docs/system-taxonomy.md
-│   ├── inbox_reaper.py               <- Deletes expired auto-reports from 00-inbox, see docs/vault-hygiene.md
+│   ├── inbox_reaper.py               <- Archives expired auto-reports by type, see docs/vault-hygiene.md
+│   ├── stack-start.ps1               <- Starts daemons and web apps: -Only, -Force, access gate, parts switched off
+│   ├── stack-stop.ps1                <- Stops the stack: watchdog first, memory gracefully, spares session MCP servers
+│   ├── idempotency.py                <- At-most-once keys for mail, messages and paid calls, see docs/task-dispatch.md
+│   ├── claude_headless.py            <- Shared env for unattended claude -p: MCP wait, cache boundary, patient 529 backoff
 │   ├── parry-scheduled-task.xml      <- Windows Task Scheduler template for Parry autostart
 │   └── register-parry-task.ps1       <- One-shot registration script (run once at setup)
 ├── tests/
@@ -135,7 +139,7 @@ Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when
 | Component | Required? | Notes |
 |-----------|-----------|-------|
 | **Claude Code** | Yes | Claude Max subscription or API access |
-| **Obsidian** (v1.12.4+) | Yes | Vault editor with CLI support |
+| **Obsidian** | Optional | A comfortable editor for the vault. Nothing in the stack depends on it |
 | **Git** + GitHub | Yes | Vault sync (private repo recommended) |
 | **Python 3.10+** | Yes | Agent scripts |
 | **For MemPalace:** NVIDIA GPU (CUDA) | Recommended | Semantic memory layer (works on CPU too) |
@@ -177,7 +181,7 @@ Throughout all files, replace these with your own values:
 | Placeholder | Replace with |
 |-------------|--------------|
 | `{{USERNAME}}` | Your name or handle |
-| `{{VAULT_PATH}}` | Path to your Obsidian vault |
+| `{{VAULT_PATH}}` | Path to your vault |
 | `{{ASSETS_PATH}}` | Path to your image/media assets |
 | `{{AUDIO_PATH}}` | Path to your audio output |
 | `{{GITHUB_REPO}}` | Your GitHub repo (e.g. `you/my-vault`) |
@@ -220,6 +224,9 @@ Throughout all files, replace these with your own values:
 | [docs/decision-gate.md](docs/decision-gate.md) | Typed decision model outside the text gateway: guards, shadow mode |
 | [docs/finish-the-job.md](docs/finish-the-job.md) | Open-thread pickup, job receipts, capability suggestions, hardened morning brief |
 | [docs/code-layout.md](docs/code-layout.md) | The four-way code layout: source repo, deployed runtime, binaries, config |
+| [docs/control-room.md](docs/control-room.md) | The local web app: channels with their own privacy ceiling, live stream, fixture mode, settings stored on the server and synced across devices |
+| [docs/system-one.md](docs/system-one.md) | Typed judgments in practice: escalate and fit, decision trail, shadow to hybrid to live, the foreman shadow over the night shift |
+| [docs/lifecycle.md](docs/lifecycle.md) | Information lifecycle: class and verdict per file instead of age, source floor, shadow week, distillate proposals |
 | [architecture/personalities/README.md](architecture/personalities/README.md) | Personality system: character sheets, switching rules, Parry middleware |
 | [architecture/telegram-v2-spec.md](architecture/telegram-v2-spec.md) | Platform adapter spec: multi-channel message routing (Telegram, CLI, email) |
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The system is a personal knowledge vault (Obsidian) with an AI assistant (Claude Code) that has direct file access. No cloud APIs between you and your notes. No intermediary services. The AI reads and writes your files directly.
+The system is a personal knowledge vault (plain markdown; Obsidian optional) with an AI assistant (Claude Code) that has direct file access. No cloud APIs between you and your notes. No intermediary services. The AI reads and writes your files directly.
 
 ```
                     ┌─────────────────┐

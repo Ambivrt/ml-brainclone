@@ -8,7 +8,7 @@ Step-by-step installation. Takes about 45 minutes for the full setup, 15 if you 
 
 | Component | Why | Required? |
 |-----------|-----|-----------|
-| **Obsidian** v1.12.4+ | Vault editor, CLI support | Yes |
+| **Obsidian** | Vault editor | Optional |
 | **Claude Code** | AI assistant (primary interface) | Yes |
 | **Git** + GitHub account | Vault sync | Yes |
 | **Python 3.10+** | Agent scripts | Yes |
@@ -90,7 +90,9 @@ git commit -m "Initial vault scaffold"
 gh repo create my-vault --private --source . --push
 ```
 
-### 1.7 Open as vault in Obsidian
+### 1.7 Open as vault in Obsidian (optional)
+
+The vault is plain markdown files and the agents reach them directly. An earlier version ran Obsidian as part of the stack and drove it through its CLI; that dependency is gone, and nothing below section 2 is required for the system to work. Keep Obsidian if you like editing in it.
 
 Obsidian → Open folder as vault → point to your vault folder.
 

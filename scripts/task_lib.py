@@ -40,6 +40,19 @@ VALID_AGENTS = ("larry", "harry", "barry", "parry", "tarry")
 # happened to check on it in time.
 DEFAULT_TASK_TTL_HOURS = 48.0
 
+# Drafts that only an interactive session may start (create_task(session_only=True)).
+# The watcher lists `pending` only, so these never run on their own.
+SESSION_START = "session"
+
+# Words that lift a task above the default level. A stand-in for a real content
+# classifier: the level follows what the task carries, never the folder it lands in.
+_PRIVATE_HINTS = re.compile(r"\b(health|diagnos|salary|password|relationship|therapy)\w*", re.I)
+
+
+def content_level(text: str) -> int:
+    """Privacy level 2 by default, 3 when the text carries something personal."""
+    return 3 if _PRIVATE_HINTS.search(text or "") else 2
+
 
 def _inbox() -> Path:
     return _vault_root() / "00-inbox"
@@ -104,11 +117,17 @@ def create_task(
     priority: str = "normal",
     context: Optional[dict] = None,
     ttl_hours: float = DEFAULT_TASK_TTL_HOURS,
+    session_only: bool = False,
 ) -> Path:
     """Create a new pending task file in 00-inbox/.
 
     `ttl_hours` sets `expires_at`: a task that never gets claimed within the
     window never runs (see `is_task_expired`/`sweep_expired_pending`).
+
+    `session_only=True` writes a `draft` with `start: session` instead. The
+    watcher never picks it up; only a session with the owner starts it. Use it
+    for anything captured from a phone or web page: the watcher runs with a
+    full shell, and nothing typed remotely should reach it unattended.
     """
     if agent not in VALID_AGENTS:
         raise ValueError(f"Invalid agent: {agent}. Choose one of {VALID_AGENTS}")
@@ -127,17 +146,21 @@ def create_task(
     if context:
         ctx_block = "\n## Context\n```json\n" + json.dumps(context, ensure_ascii=False, indent=2) + "\n```\n"
 
+    # The level comes from what the task carries: title, description and context
+    privacy = content_level(f"{title}\n{description}\n{ctx_block}")
+
     content = (
         f"---\n"
-        f"tags: [task, agent/{agent}]\n"
+        f"tags: [system/task, system/agent/{agent}]\n"
         f"task_id: {task_id}\n"
         f"agent: {agent}\n"
-        f"status: pending\n"
-        f"priority: {priority}\n"
+        f"status: {'draft' if session_only else 'pending'}\n"
+        + (f"start: {SESSION_START}\n" if session_only else "")
+        + f"priority: {priority}\n"
         f"from_source: {from_source}\n"
         f"created: {now.isoformat(timespec='seconds')}\n"
         f"expires_at: {expires_at}\n"
-        f"privacy: 2\n"
+        f"privacy: {privacy}\n"
         f"---\n\n"
         f"# {title}\n\n"
         f"## Description\n{description}\n"

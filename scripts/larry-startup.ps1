@@ -1,8 +1,13 @@
-# larry-startup.ps1
-# Startar Larry-ekosystemet: 4 separata WT-foenstren (Larry, Barry, Harry, Parry) + Obsidian.
-# - Oeppnar varje agent i sitt eget foenstret med ratt profil och faerg
-# - Laesar positioner fraan window-positions.json (koer larry-save-positions.ps1 foerst)
-# - Skippar agenter som redan koer (single instance per agent)
+# larry-startup.ps1 -- open one Windows Terminal window per brain session
+#
+# - Each agent gets its own window with its own profile and colour
+# - Positions come from window-positions.json (run larry-save-positions.ps1 first)
+# - An agent whose window is already open is skipped (one instance per agent)
+#
+# This opens the interactive sessions only. The daemon stack is stack-start.ps1.
+# Model and effort live in the vault's .claude/settings.json, not in the terminal
+# profile: a --model or --effort flag in a profile silently overrides settings.json.
+# A profile passes --remote-control <name> so each session is reachable from the phone.
 
 param(
     [int]$DelaySeconds = 5
@@ -10,72 +15,47 @@ param(
 
 Start-Sleep -Seconds $DelaySeconds
 
-# --- Hjaelpfunktion: kontrollera om ett agent-foenstret redan aer oeppet ---
 function Test-AgentRunning([string]$agentName) {
-    $procs = Get-Process WindowsTerminal -ErrorAction SilentlyContinue
-    foreach ($p in $procs) {
+    foreach ($p in (Get-Process WindowsTerminal -ErrorAction SilentlyContinue)) {
         if ($p.MainWindowTitle -like "*$agentName*") { return $true }
     }
     return $false
 }
 
-# --- Laas positionskonfig ---
 $posFile = "$PSScriptRoot\window-positions.json"
 $positions = $null
 if (Test-Path $posFile) {
     $positions = Get-Content $posFile -Encoding UTF8 | ConvertFrom-Json
 } else {
-    Write-Host "[VARNING] window-positions.json saknas - oeppnar utan positionsdata." -ForegroundColor Yellow
-    Write-Host "          Koer scripts\larry-save-positions.ps1 efter att ha positionerat foenstren." -ForegroundColor Yellow
+    Write-Host "[WARN] window-positions.json missing, opening without positions." -ForegroundColor Yellow
+    Write-Host "       Run scripts\larry-save-positions.ps1 after placing the windows." -ForegroundColor Yellow
 }
 
-# --- Obsidian ---
-$obsidianExe = "$env:LOCALAPPDATA\Programs\Obsidian\Obsidian.exe"
-if (Test-Path $obsidianExe) {
-    $already = Get-Process Obsidian -ErrorAction SilentlyContinue
-    if (-not $already) {
-        Start-Process $obsidianExe -WindowStyle Minimized
-        Write-Host "[OK] Obsidian startad"
-    } else {
-        Write-Host "[--] Obsidian koer redan"
-    }
-}
-
-# --- Agenter ---
 $agents = @(
     @{ Name = "Larry"; Profile = "Larry" },
     @{ Name = "Barry"; Profile = "Barry" },
     @{ Name = "Harry"; Profile = "Harry" },
-    @{ Name = "Parry"; Profile = "Parry" }
+    @{ Name = "Garry"; Profile = "Garry" }
 )
 
 foreach ($agent in $agents) {
-    $name    = $agent.Name
-    $profile = $agent.Profile
-
+    $name = $agent.Name
     if (Test-AgentRunning $name) {
-        Write-Host "[--] $name koer redan, hoppar oever"
+        Write-Host "[--] $name already running, skipping"
         continue
     }
-
-    # Bygg argument
     $posArg = ""
     if ($positions -and $positions.$name) {
-        $x = $positions.$name.X
-        $y = $positions.$name.Y
-        $posArg = "--pos $x,$y "
+        $posArg = "--pos $($positions.$name.X),$($positions.$name.Y) "
     }
-
-    # -w new = foerced separat foenstret (inte ny flik i befintligt)
-    # --title saetter foensternamnet sa att Test-AgentRunning kan hitta det
-    $wtArgs = "$($posArg)-w new new-tab --profile `"$profile`" --title `"$name`""
+    # -w new forces a separate window (not a new tab in an existing one).
+    # --title names the window so Test-AgentRunning can find it.
+    $wtArgs = "$($posArg)-w new new-tab --profile `"$($agent.Profile)`" --title `"$name`""
     Start-Process "wt.exe" -ArgumentList $wtArgs
-
-    Write-Host "[OK] $name startad$(if ($posArg) { `" (pos: $($positions.$name.X),$($positions.$name.Y))`" })"
-
-    # Kort paus saa att WT hinner registrera foenstret innan naesta
+    Write-Host "[OK] $name started"
+    # Give Windows Terminal time to register the window before the next one
     Start-Sleep -Milliseconds 600
 }
 
 Write-Host ""
-Write-Host "Larry-ekosystemet aer igaang."
+Write-Host "Sessions are open."

@@ -140,42 +140,24 @@ step, stop the daemon) when you want to reduce noise.
 
 ---
 
-## Layer 4 — Pre-turn context injection
+## Layer 4 — Awareness mid-session
 
-Layers 1-3 create work. Layer 4 injects **awareness**: fresh bus events and
-fired reminders surface mid-session without the agent having to ask.
+Layers 1-3 create work. Layer 4 makes the agent **aware** of what happened while it was busy: fresh bus events and fired reminders.
 
-`scripts/inject-context.py` runs as a Claude Code `PreToolUse` hook on all
-major tools. It reads the bus SQLite DB directly (no subprocess), checks for
-fired reminders, and writes to stderr (which Claude sees as a system message).
+The first version did this in a `PreToolUse` hook that read the bus every 90 seconds and wrote what it found to stderr. None of it ever reached the model: a hook's stderr with exit code 0 is shown to nobody. Two things replaced it:
 
-**Throttled to one check per 90 seconds.** All other invocations exit after
-a single timestamp comparison (~0ms overhead).
+- **A Monitor at session init.** The session starts a background watch on the bus (the harness's Monitor tool or an equivalent tail) and is woken by new events instead of polling on every tool call.
+- **Hook context the right way.** A hook that must reach the model writes JSON on stdout: `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": "..."}}`. `scripts/inject-context.py` now does only that, and only for one thing: a voice hint when the agent is about to write prose (`.md`, `.txt`), matched on the file path.
 
 ```
 # .claude/settings.json
 {
-  "matcher": "Bash|PowerShell|Read|Edit|Write|Glob|Grep|Agent|WebFetch|WebSearch",
+  "matcher": "Edit|Write",
   "hooks": [{ "type": "command", "command": "python hooks/inject-context.py" }]
 }
 ```
 
-Output (only when there are new events):
-```
-BUS-UPDATE:
-  #1548 marcus->* telegram-inbound [pass]
-  #1549 carry->larry carry-delivered [pass]
-REMINDERS-FIRED:
-  tarry-weekly-review: Weekly review reminder
-```
-
-**Why this matters:** Session-init loads context once. But sessions can run
-for hours. Without injection, the agent operates on stale state — it doesn't
-know a task failed, a reminder fired, or a new Telegram message arrived. This
-closes the gap between "events happen" and "the agent knows about them."
-
-Configure via env vars: `VAULT_ROOT`, `BUS_DB_PATH`, `REMINDER_QUEUE`,
-`INJECT_THROTTLE`.
+Test a new hook by checking what the model actually receives, not by seeing the hook run. A hook that runs and reaches nobody looks exactly like one that works.
 
 ---
 
