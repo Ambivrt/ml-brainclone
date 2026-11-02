@@ -554,6 +554,16 @@ Diary entries are stored IN ChromaDB, so a palace nuke loses them. The WAL (`wri
 
 Write a replay script that reads the WAL, expands AAAK format, and re-inserts into the fresh palace.
 
+### One wrapper for everything that rewrites the palace
+
+`repair`, `mine`, `sweep` and `migrate` all persist the embedding function into the collection. Called directly, `python -m mempalace` persists the library default (a 384-dim model), and from then on every query from a server that uses e5-large fails with an embedding-function conflict. Route every palace-rewriting command through one wrapper script that sets the embedder first, and never call the module directly for those commands. Read-only commands (`status`, `repair-status`) are safe.
+
+Three more lessons from running it for months:
+
+- **WAL mode on the palace SQLite**, and a checkpoint before any backup copy, so a nightly copy never catches half a transaction.
+- **Mine ignores `.gitignore`.** Private folders are often gitignored precisely because they matter. Excluding them from memory is the wrong default; privacy is handled by levels, not by what git tracks.
+- **The archive is long-term memory.** Archived files stay in the palace. Moving something to the archive changes where it lives, not whether it is remembered.
+
 ### Avoiding Conflicts
 
 **Never run two mine processes simultaneously.** The `file_already_mined` check uses mtime — if process A mines a file, process B skips it (thinks it's done). Result: partial index.

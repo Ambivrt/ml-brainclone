@@ -44,6 +44,8 @@ ml-brainclone/
 │   ├── content-campaigns.md      <- Content campaign management: calendar + Tarry chains + morning brief
 │   ├── autonomous-loops.md       <- Self-prompting loops: deterministic judge + completion promise
 │   ├── multi-llm-gateway.md      <- Several model families behind one gate: secret scan, privacy policy, schema validation, cross-vendor review
+│   ├── headless-guards.md        <- Guards for unattended sessions: loop guard, protected files, job budget, taint, credential scan, envelope
+│   ├── img/architecture-2026-11.svg <- Reference install as a diagram
 │   └── vault-ingest.md           <- Document conversion tool (MarkItDown)
 ├── templates/
 │   ├── daily.md                  <- Daily note template
@@ -71,11 +73,23 @@ ml-brainclone/
 │   ├── stack-stop.ps1                <- Stops the stack: watchdog first, memory gracefully, spares session MCP servers
 │   ├── idempotency.py                <- At-most-once keys for mail, messages and paid calls, see docs/task-dispatch.md
 │   ├── claude_headless.py            <- Shared env for unattended claude -p: MCP wait, cache boundary, patient 529 backoff
+│   ├── stack-boot.ps1                <- Logon-task script: waits for the web task, then a full start. The stack is back after every reboot
+│   ├── register-stack-task.ps1       <- Registers the autostart and always-up web logon tasks (run once, elevated)
+│   ├── proc-names.ps1                <- Shared by start, stop and watchdog: ml-<name>.exe names, port reserve
+│   ├── loop_guard.py                 <- Stops a headless session that repeats the same call, see docs/headless-guards.md
+│   ├── protected_files.py            <- Files an unattended session may never write
+│   ├── job_budget.py                 <- Per-day ledger of runs, turns and cost per job
+│   ├── extern_taint.py               <- Marks a session that read untrusted input; it may not send anything out
+│   ├── credential_scan.py            <- Generic secret patterns, scan and redact
+│   ├── envelope.py                   <- Sender envelope on tasks and bus rows: owner or another agent
+│   ├── skill_usage.py / skill_lint.py <- Which skills get used, and what is broken in them
+│   ├── hooks/                        <- loop-guard, extern-taint-read, skill-usage hooks for Claude Code
 │   ├── parry-scheduled-task.xml      <- Windows Task Scheduler template for Parry autostart
 │   └── register-parry-task.ps1       <- One-shot registration script (run once at setup)
 ├── tests/
 │   ├── test_brief_output.py          <- brief_output.py: validation + atomic write + CLI mode
-│   └── test_nightly_runner_readonly.py <- Structural checks on the morning brief's read-only hardening
+│   ├── test_nightly_runner_readonly.py <- Structural checks on the morning brief's read-only hardening
+│   └── test_headless_guards.py       <- The guard modules: loop, protected files, budget, taint, secrets, envelope, skills
 ├── architecture/
 │   ├── personalities/
 │   │   ├── README.md                 <- Personality system: character sheets, switching rules, middleware
@@ -91,16 +105,18 @@ ml-brainclone/
 
 ## The Agent Ecosystem
 
-12 agents: one orchestrator, three modalities, eight services. 10 daemons run under one watchdog with singleton locks and a circuit breaker (three failed restarts and it stops trying).
+12 agents: one orchestrator, three modalities, eight services. In the reference install that is 15 running processes (daemons, one task watcher per modality, the memory server and its proxy, the web app and its tunnel) under one watchdog with singleton locks and a circuit breaker (three failed restarts and it stops trying). The whole stack comes back by itself after a reboot, except the parts the owner switched off.
+
+![How ml-brainclone fits together, reference install November 2026](docs/img/architecture-2026-11.svg)
 
 ### Modalities (senses)
 
 | Agent | Modality | What it does | Technology |
 |-------|----------|-------------|------------|
 | **Larry** | Text | Orchestrator. Thinks, writes, codes, plans, remembers. | Claude Code (see [docs/model-tiering.md](docs/model-tiering.md)) |
-| **Barry** | Image | Generates images, sorts visual material, maintains visual index. | Venice Chat via Playwright |
-| **Harry** | Audio | TTS, STT, realtime voice, music. Also runs a dictation daemon. | Gemini TTS (Vertex AI) + FFmpeg |
-| **Garry** | Spatial | Image-to-3D mesh, background removal, Blender import, export into a game engine. | Trellis 2 + rembg + Blender |
+| **Barry** | Image | Generates images, reviews new ones itself, sets a privacy level per image, maintains the visual index. | ChatGPT Images via Codex CLI + Venice via Playwright |
+| **Harry** | Audio | TTS with a disk cache, dubbing, music. Also runs a local dictation daemon. | ElevenLabs + faster-whisper (CUDA) + Lyria + FFmpeg |
+| **Garry** | Spatial | Image-to-3D mesh, background removal, Blender import, export into a game engine. Rebuilds from a per-model change queue in the studio. | Trellis 2 + rembg + Blender (MCP) + Unity |
 
 ### Services (organs)
 
@@ -130,6 +146,7 @@ Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when
 - **Robust over quick**, Never a hack. The system must be reliable enough to trust as your second brain.
 - **Yolo mode**, Larry runs with `--dangerously-skip-permissions`. No confirmation prompts, but this sits underneath an oversight layer, not instead of one: a rule engine decides per action whether it waits for a yes, happens with an undo window, or just gets logged. See [docs/oversight.md](docs/oversight.md).
 - **Remote Control always on**, every session starts with `--remote-control <brain>` so it can be followed and steered from a phone.
+- **Guards for unattended runs**, headless sessions never reach the key store, are tainted after reading untrusted input, cannot write protected files, have a per-job budget and a loop guard. See [docs/headless-guards.md](docs/headless-guards.md).
 - **Nightly automation**, nine scheduled batches run overnight, morning brief at 05:30. Bulk work (vault hygiene, inbox triage, knowledge distillation) runs on the cheapest model tier that clears the bar, never the smallest one. See [docs/model-tiering.md](docs/model-tiering.md).
 
 ---
@@ -144,7 +161,7 @@ Larry orchestrates everything. Barry, Harry, and Garry are invoked by Larry when
 | **Python 3.10+** | Yes | Agent scripts |
 | **For MemPalace:** NVIDIA GPU (CUDA) | Recommended | Semantic memory layer (works on CPU too) |
 | **For Barry:** Venice.ai account, Edge, Playwright | Optional | Image generation agent |
-| **For Harry:** GCP + Vertex AI, FFmpeg | Optional | Audio/TTS agent |
+| **For Harry:** ElevenLabs account, FFmpeg, NVIDIA GPU for local dictation | Optional | Audio/TTS agent |
 | **For Garry:** Trellis 2, rembg, Blender 4.0+ | Optional | Spatial/3D agent |
 
 ---

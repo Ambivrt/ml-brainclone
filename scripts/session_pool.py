@@ -5,6 +5,11 @@ Sessions auto-expire after MAX_AGE_S inactivity or MAX_FAILURES consecutive erro
 
 Inspired by Pi.dev's RPC mode: keep context, skip cold starts.
 
+A tainted session is not pooled. If it has read untrusted external text
+(extern_taint) or private level 3-4 content (privacy_taint, if present), that stays
+in its context, and the next task would inherit both the text and the mark. The
+session may finish its task, then the next task starts cold and clean.
+
 Configure:
     SESSION_POOL_DIR  -- where to store session state (default: VAULT_ROOT/_private)
 """
@@ -50,15 +55,49 @@ def _save(agent: str, data: dict):
     _state_path(agent).write_text(json.dumps(data, sort_keys=True), encoding="utf-8")
 
 
+def taint_reason(session_id: str) -> str | None:
+    """Why the session must not be reused, or None if it is clean."""
+    if not session_id:
+        return None
+    try:
+        import extern_taint
+        if extern_taint.tainted(session_id):
+            return "read untrusted external text"
+    except Exception as e:  # noqa: BLE001 -- the pool must work without the taint modules
+        log.warning(f"extern taint check did not answer: {e}")
+    try:
+        import privacy_taint  # optional: only present when level tracking is set up
+    except ImportError:
+        return None
+    try:
+        level = int(privacy_taint.load(session_id).get("max", 0))
+        if level >= privacy_taint.PRIVATE_FLOOR:
+            return f"read level {level} content"
+    except Exception as e:  # noqa: BLE001
+        log.warning(f"privacy taint check did not answer: {e}")
+    return None
+
+
 def get_session_id(agent: str) -> str | None:
     """Return the stored session ID, or None if no valid session exists."""
     data = _load(agent)
-    return data.get("session_id")
+    session_id = data.get("session_id")
+    reason = taint_reason(session_id)
+    if reason:
+        log.info(f"[{agent}] session {session_id[:8]} {reason}, starting cold")
+        clear_session(agent)
+        return None
+    return session_id
 
 
 def update_session(agent: str, session_id: str, success: bool):
     """Update the session after a task execution."""
     data = _load(agent)
+    reason = taint_reason(session_id)
+    if reason:
+        log.info(f"[{agent}] session {session_id[:8]} {reason}, not pooled")
+        clear_session(agent)
+        return
     if success:
         data["session_id"] = session_id
         data["last_used"] = time.time()

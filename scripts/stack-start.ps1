@@ -20,6 +20,19 @@
 # Web apps start on their local port, always. The tunnel port is opened only
 # when the access policy in front of the tunnel verifies (see Invoke-AccessGate).
 # Without a verified policy the app stays local, never open on the internet.
+#
+# The web app and its tunnel are meant to be always up: they are the way in from
+# a phone. The tunnel client is started with the web app, by a full start and by
+# -Only Web. stack-stop leaves both running unless it gets -All, and a full
+# -Force uses -All so the web app picks up new code.
+#
+# A full start ends a stale game mode (data/web/game-mode.json, "on": true).
+# Left on, the watchdog keeps the resting parts down although they were just
+# started, and the web UI shows game mode with everything running. -Only never
+# touches the file: it is game mode's own way back.
+#
+# After a reboot the whole stack starts itself through a logon task, see
+# stack-boot.ps1 and register-stack-task.ps1.
 
 param([switch]$Force, [string[]]$Only)
 
@@ -30,6 +43,7 @@ $NotifDir = Join-Path $VaultPath ".notifications"
 $WebData  = Join-Path $VaultPath "data\web"
 if (-not (Test-Path $NotifDir)) { New-Item -Path $NotifDir -ItemType Directory -Force | Out-Null }
 $env:PYTHONIOENCODING = "utf-8"
+. (Join-Path $PSScriptRoot "proc-names.ps1")
 
 # === Daemon registry ===
 # Order matters: the gatekeeper first, then services, then listeners.
@@ -37,7 +51,7 @@ $env:PYTHONIOENCODING = "utf-8"
 # without them). It runs under a hidden cmd with stdout+stderr appended to <name>.log.
 $daemons = @(
     @{ Name = "Parry";  PidFile = "parry.pid";  Script = Join-Path $VaultPath "bus\parry_service.py";    WorkDir = Join-Path $VaultPath "bus" }
-    @{ Name = "Memory"; PidFile = "memory.pid"; Script = Join-Path $VaultPath "memory\memory_server.py"; WorkDir = Join-Path $VaultPath "memory"; Port = 18923; Console = $true; HideConsole = $true }
+    @{ Name = "Memory"; PidFile = "memory.pid"; Script = Join-Path $VaultPath "memory\memory_server.py"; WorkDir = Join-Path $VaultPath "memory"; Port = 18923; Console = $true; HideConsole = $true; GracefulOnly = $true }
     @{ Name = "Tarry";  PidFile = "tarry.pid";  Script = Join-Path $VaultPath "agents\tarry_service.py";  WorkDir = Join-Path $VaultPath "agents" }
     @{ Name = "Carry";  PidFile = "carry.pid";  Script = Join-Path $VaultPath "agents\carry_service.py";  WorkDir = Join-Path $VaultPath "agents" }
     @{ Name = "Bot-listener"; PidFile = "bot-listener.pid"; Script = Join-Path $VaultPath "notifications\bot_listener.py"; WorkDir = Join-Path $VaultPath "notifications" }
@@ -78,16 +92,34 @@ function Invoke-AccessGate {
     return $code
 }
 
+# The OS listener table first, the port reserve in proc-names.ps1 second.
 function Get-PortListenerPid([int]$Port) {
-    $c = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($c) { return $c.OwningProcess } else { return $null }
+    return Get-StackPortListenerPid -Port $Port
 }
 
+# Is the process behind a pid the stack's own python (python, pythonw or a named
+# ml-<name>.exe) with $Match on its command line? Anything else is another
+# program that holds the pid or the port. Guards every kill below: a pid file or
+# a port is only a number.
 function Test-AppProcess([int]$ProcessId, [string]$Match) {
     try {
         $p = Get-CimInstance Win32_Process -Filter "ProcessId=$ProcessId" -ErrorAction Stop
-        return ($p.Name -match "^python" -and $p.CommandLine -like "*$Match*")
+        if (-not $p -or -not $p.CommandLine) { return $false }
+        return ($p.Name -match $StackPyNameRx -and $p.CommandLine.ToLowerInvariant().Contains($Match.ToLowerInvariant()))
     } catch { return $false }
+}
+
+# The tunnel follows the web app: full start and -Only Web. The client is looked
+# up on PATH or in CLOUDFLARED_EXE; not installed means nothing to start.
+# Returns $true if it was started here.
+function Start-Tunnel {
+    if (Get-Process -Name "cloudflared" -ErrorAction SilentlyContinue) { Write-Host "  [=] Tunnel already up"; return $false }
+    $exe = $env:CLOUDFLARED_EXE
+    if (-not $exe) { $exe = (Get-Command cloudflared -ErrorAction SilentlyContinue).Source }
+    if (-not $exe -or -not (Test-Path -LiteralPath $exe)) { Write-Host "  [-] tunnel client not installed, skipped"; return $false }
+    Start-Process -FilePath $exe -ArgumentList "tunnel run" -WindowStyle Hidden | Out-Null
+    Write-Host "  [+] Tunnel started"
+    return $true
 }
 
 function Test-DaemonAlive([hashtable]$Daemon) {
@@ -95,7 +127,7 @@ function Test-DaemonAlive([hashtable]$Daemon) {
     $pidPath = Join-Path $NotifDir $Daemon.PidFile
     if (-not (Test-Path $pidPath)) { return $false }
     $dpid = (Get-Content $pidPath -Raw).Trim()
-    try { return ((Get-Process -Id $dpid -ErrorAction Stop).ProcessName -match "python") } catch { return $false }
+    try { return ((Get-Process -Id $dpid -ErrorAction Stop).ProcessName -match $StackPyProcRx) } catch { return $false }
 }
 
 function Start-Daemon([hashtable]$Daemon) {
@@ -107,9 +139,11 @@ function Start-Daemon([hashtable]$Daemon) {
         # Rotated at 5 MB, one generation.
         $out = Join-Path $NotifDir "$name.log"
         if ((Test-Path $out) -and ((Get-Item $out).Length -gt 5MB)) { Move-Item -Force $out "$out.1" }
-        Start-Process cmd -ArgumentList "/c cd /d `"$($Daemon.WorkDir)`" && python -u $scriptArgs >> `"$out`" 2>&1" -WindowStyle Hidden | Out-Null
+        # Named exe (ml-<name>.exe) when the deploy made one, plain python otherwise.
+        $pyExe = Get-StackPythonExe $Daemon.Name "python"
+        Start-Process cmd -ArgumentList "/c cd /d `"$($Daemon.WorkDir)`" && `"$pyExe`" -u $scriptArgs >> `"$out`" 2>&1" -WindowStyle Hidden | Out-Null
     } else {
-        Start-Process -FilePath "pythonw" -ArgumentList $scriptArgs -WorkingDirectory $Daemon.WorkDir -WindowStyle Hidden `
+        Start-Process -FilePath (Get-StackPythonExe $Daemon.Name "pythonw") -ArgumentList $scriptArgs -WorkingDirectory $Daemon.WorkDir -WindowStyle Hidden `
             -RedirectStandardError (Join-Path $NotifDir "$name.log.err") | Out-Null
     }
     if ($Daemon.Port) {
@@ -138,16 +172,28 @@ if ($Force -and $Only) {
         }
     }
     foreach ($d in $daemons) {
+        # The memory server holds an unflushed vector index and stops only
+        # gracefully, through stack-stop. A hard kill has corrupted the index.
+        if ($d.GracefulOnly) { Write-Host "  [!] $($d.Name) stops only through stack-stop (graceful), left alone"; continue }
         $pidPath = Join-Path $NotifDir $d.PidFile
-        if (Test-Path $pidPath) { Stop-Process -Id ((Get-Content $pidPath -Raw).Trim()) -Force -ErrorAction SilentlyContinue; Write-Host "  [x] $($d.Name) stopped" }
+        if (-not (Test-Path $pidPath)) { continue }
+        # A pid file is only a number: kill only if it is still the stack's own python
+        $dpid = (Get-Content $pidPath -Raw).Trim()
+        if (($dpid -match '^\d+$') -and (Test-AppProcess ([int]$dpid) $VaultPath)) {
+            Stop-Process -Id ([int]$dpid) -Force -ErrorAction SilentlyContinue; Write-Host "  [x] $($d.Name) stopped"
+        } else {
+            Write-Host "  [~] $($d.Name): stale pid file ($dpid), nothing killed"
+        }
     }
     Start-Sleep -Seconds 1
 } elseif ($Force) {
     Write-Host "--- Force: stopping everything first ---"
-    & (Join-Path $PSScriptRoot "stack-stop.ps1")
+    # -All: the web app and the tunnel too, so the web app picks up new code
+    & (Join-Path $PSScriptRoot "stack-stop.ps1") -All
 }
 
 if (-not $Only) {
+    $allDaemons = @($daemons)
     $off = @()
     $offFile = Join-Path $WebData "parts-off.json"
     if (Test-Path $offFile) { try { $off = @((Get-Content $offFile -Raw -Encoding UTF8 | ConvertFrom-Json).off | ForEach-Object { "$_".ToLower() }) } catch { } }
@@ -155,9 +201,28 @@ if (-not $Only) {
         Write-Host "  [-] switched off in the control room: $($off -join ', ')"
         $daemons = @($daemons | Where-Object { $off -notcontains $_.Name.ToLower() })
         $apps    = @($apps    | Where-Object { $off -notcontains $_.Name.ToLower() })
+        # A part that is off is not started, so nobody clears its pid file. Remove it
+        # here when the process is gone, or it points at some other process later.
+        foreach ($offD in @($allDaemons | Where-Object { $off -contains $_.Name.ToLower() })) {
+            if (-not (Test-DaemonAlive $offD)) { Remove-Item (Join-Path $NotifDir $offD.PidFile) -Force -ErrorAction SilentlyContinue }
+        }
     }
     Get-ChildItem $NotifDir -Filter "*.disabled" -ErrorAction SilentlyContinue | Remove-Item -Force
     Get-ChildItem $NotifDir -Filter "*.circuit-broken" -ErrorAction SilentlyContinue | Remove-Item -Force
+
+    # A full start means everything runs: end a stale game mode.
+    $gameFile = Join-Path $WebData "game-mode.json"
+    if (Test-Path $gameFile) {
+        try {
+            $gm = Get-Content $gameFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($gm.on -eq $true) {
+                $gm.on = $false
+                $gm | Add-Member -NotePropertyName ended_at -NotePropertyValue (Get-Date -Format "yyyy-MM-ddTHH:mm:sszzz") -Force
+                [System.IO.File]::WriteAllText($gameFile, ($gm | ConvertTo-Json -Depth 6), (New-Object System.Text.UTF8Encoding($false)))
+                Write-Host "  [-] game mode was on, ended by the full start"
+            }
+        } catch { Write-Host "  [!] game-mode.json could not be read: $($_.Exception.Message)" }
+    }
 }
 
 $started = 0; $up = 0; $failed = 0
@@ -183,10 +248,16 @@ foreach ($a in $apps) {
         elseif ($gate -eq 3) { Write-Host "  [-] $($a.Name): tunnel not set up yet, local only" }
         else { Write-Host "  [!] $($a.Name): access policy did not verify (exit $gate), local only"; $failed++ }
     }
-    Start-Process -FilePath "pythonw" -ArgumentList $appArgs -WorkingDirectory $a.WorkDir -WindowStyle Hidden | Out-Null
+    Start-Process -FilePath (Get-StackPythonExe $a.Name "pythonw") -ArgumentList $appArgs -WorkingDirectory $a.WorkDir -WindowStyle Hidden | Out-Null
     $deadline = (Get-Date).AddSeconds(15); $ok = $false
     while ((Get-Date) -lt $deadline) { $lp = Get-PortListenerPid $a.Port; if ($lp) { "$lp" | Out-File (Join-Path $NotifDir $a.PidFile) -Encoding ascii -NoNewline; $ok = $true; break }; Start-Sleep -Milliseconds 500 }
     if ($ok) { Write-Host "  [+] $($a.Name) started (port $($a.Port))"; $started++ } else { Write-Host "  [!] $($a.Name) FAILED"; $failed++ }
+}
+
+# The tunnel follows the web app: a full start with the web app on, and -Only Web.
+if (@($apps | Where-Object { $_.TunnelPort }).Count -gt 0) {
+    Write-Host "--- Tunnel ---"
+    if (Start-Tunnel) { $started++ } else { $up++ }
 }
 
 Write-Host ""

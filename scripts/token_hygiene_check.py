@@ -9,7 +9,7 @@ Usage:
     python scripts/token_hygiene_check.py --vault /path/to/vault --memory /path/to/MEMORY.md
 
 Configure thresholds below or override via environment variables:
-    TOKEN_HYGIENE_CLAUDE_WORDS=800
+    TOKEN_HYGIENE_CLAUDE_WORDS=2500
     TOKEN_HYGIENE_MEMORY_LINES=150
     TOKEN_HYGIENE_MAX_PLUGINS=5
 """
@@ -32,7 +32,9 @@ MEMORY_CANDIDATES = [
 USER_SETTINGS = Path.home() / ".claude" / "settings.json"
 
 THRESHOLDS = {
-    "claude_md_words": int(os.environ.get("TOKEN_HYGIENE_CLAUDE_WORDS", 800)),
+    # CLAUDE.md is not slimmed on purpose. The threshold guards against
+    # uncontrolled growth, not against size itself.
+    "claude_md_words": int(os.environ.get("TOKEN_HYGIENE_CLAUDE_WORDS", 2500)),
     "memory_md_lines": int(os.environ.get("TOKEN_HYGIENE_MEMORY_LINES", 150)),
     "active_plugins": int(os.environ.get("TOKEN_HYGIENE_MAX_PLUGINS", 5)),
 }
@@ -56,7 +58,7 @@ def check_claude_md():
         "words": words,
         "threshold": THRESHOLDS["claude_md_words"],
         "msg": f"CLAUDE.md: {words} words (max {THRESHOLDS['claude_md_words']})"
-        + (" — TRIM NEEDED" if over else " OK"),
+        + (", review what has grown" if over else " OK"),
     }
 
 
@@ -72,7 +74,7 @@ def check_memory_md():
         "lines": count,
         "threshold": THRESHOLDS["memory_md_lines"],
         "msg": f"MEMORY.md: {count} lines (max {THRESHOLDS['memory_md_lines']})"
-        + (" — TRIM NEEDED" if over else " OK"),
+        + (", review what has grown" if over else " OK"),
     }
 
 

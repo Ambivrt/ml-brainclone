@@ -74,6 +74,35 @@ Rules that keep it safe:
 
 ---
 
+## Views
+
+One catalog drives every menu, in four groups. A view switch never reloads the page, fullscreen stays on.
+
+| Group | Views |
+|-------|-------|
+| Workspaces | Writing room, Studio, Files |
+| Status | Control room, Graphs, The night (replayed in thirty seconds), Brains, Threads |
+| Maps | Observatory, Night city, Vault graph, Memory |
+| System | System map, Components, Repos, Controls, Keys |
+
+What some of them do:
+
+- **Studio.** Everything the image, audio and 3D agents produce lands here. A 3D viewer for glb, fbx and obj with light and animation controls. Each file gets a level and a 0-5 rating. The 3D agent has a change queue per model: the owner writes what is wrong, the agent rebuilds, answers what it changed, and keeps the lesson for next time. Select and delete work on all three surfaces and go to a trash that can be undone.
+- **Dig.** Semantic search over images, audio and 3D models, next to the memory search. A cosine floor on top of a z-score gate, so noise returns nothing instead of something.
+- **Writing room.** The text lives in the vault. Read mode, dictation through the local speech-to-text daemon, read-aloud with a voice per character and tags with a range, cost per read shown before credits run out.
+- **Observatory and Night city.** The system as a galaxy and as a city in the rain, with a timeline that replays the day. Both also run as screensavers on their own live channel, with a ceiling of L1 or L2 set from the control room.
+- **System map.** Every running part, what it depends on and its state, including scheduled jobs and what lives outside the machine. It shows failures as they are.
+- **Components.** Version and update need for runtimes, MCP servers, plugins and skills. It installs nothing.
+- **Keys.** Add and rotate API keys from the web, only on the `local` channel.
+
+---
+
+## New code without a reload
+
+The server announces the build it is running. When it changes, the client swaps code the next time the user is idle. A view that is busy (an upload, a recording, unsaved text) says so, and the swap waits. Views also keep their own data fresh. Nobody should ever have to press F5.
+
+---
+
 ## Switching parts off
 
 The control room can switch a part of the stack off (`parts-off.json`) or rest it during game mode (`game-mode.json`). The start script and the watchdog both read these files, so a part you switched off stays off through a watchdog cycle and a reboot. Without that, the watchdog restarts within a minute what you just turned off.

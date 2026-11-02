@@ -1,0 +1,216 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" role="img" aria-label="How ml-brainclone fits together">
+<defs><radialGradient id="glow" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#1E3A5F" stop-opacity="0.9"/><stop offset="1" stop-color="#122540" stop-opacity="1"/></radialGradient><linearGradient id="band" x1="0" x2="1"><stop offset="0" stop-color="#C8943A" stop-opacity="0"/><stop offset="0.5" stop-color="#C8943A" stop-opacity="0.35"/><stop offset="1" stop-color="#C8943A" stop-opacity="0"/></linearGradient><radialGradient id="milla" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#C8943A" stop-opacity="0.55"/><stop offset="1" stop-color="#C8943A" stop-opacity="0"/></radialGradient><radialGradient id="parry" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#F5F0E8" stop-opacity="0.35"/><stop offset="1" stop-color="#F5F0E8" stop-opacity="0"/></radialGradient><pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#F5F0E8" fill-opacity="0.05"/></pattern></defs>
+<rect width="1600" height="1000" fill="url(#glow)"/><rect width="1600" height="1000" fill="url(#dots)"/>
+<path d="M800,92 C800,135.5 320,135.5 320,179" fill="none" stroke="#C0622A" stroke-opacity="0.5249999999999999" stroke-width="1.3" stroke-dasharray="2 5"/>
+<path d="M320,257 C320,284.0 800,284.0 800,311" fill="none" stroke="#F5F0E8" stroke-opacity="0.27" stroke-width="1.3"/>
+<path d="M800,92 C800,135.5 560,135.5 560,179" fill="none" stroke="#C0622A" stroke-opacity="0.5249999999999999" stroke-width="1.3" stroke-dasharray="2 5"/>
+<path d="M560,257 C560,284.0 800,284.0 800,311" fill="none" stroke="#F5F0E8" stroke-opacity="0.27" stroke-width="1.3"/>
+<path d="M800,92 C800,135.5 800,135.5 800,179" fill="none" stroke="#C0622A" stroke-opacity="0.5249999999999999" stroke-width="1.3" stroke-dasharray="2 5"/>
+<path d="M800,257 C800,284.0 800,284.0 800,311" fill="none" stroke="#F5F0E8" stroke-opacity="0.27" stroke-width="1.3"/>
+<path d="M800,92 C800,135.5 1040,135.5 1040,179" fill="none" stroke="#C0622A" stroke-opacity="0.5249999999999999" stroke-width="1.3" stroke-dasharray="2 5"/>
+<path d="M1040,257 C1040,284.0 800,284.0 800,311" fill="none" stroke="#F5F0E8" stroke-opacity="0.27" stroke-width="1.3"/>
+<path d="M800,92 C800,135.5 1280,135.5 1280,179" fill="none" stroke="#C0622A" stroke-opacity="0.5249999999999999" stroke-width="1.3" stroke-dasharray="2 5"/>
+<path d="M1280,257 C1280,284.0 800,284.0 800,311" fill="none" stroke="#F5F0E8" stroke-opacity="0.27" stroke-width="1.3"/>
+<path d="M800,379 C800,420.5 115,420.5 115,462" fill="none" stroke="#F5F0E8" stroke-opacity="0.24" stroke-width="1.3"/>
+<path d="M800,379 C800,420.5 210,420.5 210,462" fill="none" stroke="#F5F0E8" stroke-opacity="0.24" stroke-width="1.3"/>
+<path d="M800,379 C800,420.5 305,420.5 305,462" fill="none" stroke="#F5F0E8" stroke-opacity="0.24" stroke-width="1.3"/>
+<path d="M800,379 C800,420.5 400,420.5 400,462" fill="none" stroke="#F5F0E8" stroke-opacity="0.24" stroke-width="1.3"/>
+<path d="M800,379 C800,420.5 495,420.5 495,462" fill="none" stroke="#F5F0E8" stroke-opacity="0.24" stroke-width="1.3"/>
+<path d="M800,379 C800,420.5 590,420.5 590,462" fill="none" stroke="#F5F0E8" stroke-opacity="0.24" stroke-width="1.3"/>
+<path d="M800,379 C800,420.5 735,420.5 735,462" fill="none" stroke="#F5F0E8" stroke-opacity="0.24" stroke-width="1.3"/>
+<path d="M800,379 C800,420.5 845,420.5 845,462" fill="none" stroke="#F5F0E8" stroke-opacity="0.24" stroke-width="1.3"/>
+<path d="M800,379 C800,420.5 955,420.5 955,462" fill="none" stroke="#F5F0E8" stroke-opacity="0.24" stroke-width="1.3"/>
+<path d="M800,379 C800,420.5 1065,420.5 1065,462" fill="none" stroke="#F5F0E8" stroke-opacity="0.24" stroke-width="1.3"/>
+<path d="M800,379 C800,414.0 1350,414.0 1350,449" fill="none" stroke="#C8943A" stroke-opacity="0.44999999999999996" stroke-width="1.3"/>
+<path d="M735,548 C735,691.0 820,691.0 820,834" fill="none" stroke="#C0622A" stroke-opacity="0.5249999999999999" stroke-width="1.3"/>
+<path d="M735,548 C735,691.0 975,691.0 975,834" fill="none" stroke="#C0622A" stroke-opacity="0.33" stroke-width="1.3" stroke-dasharray="3 4"/>
+<path d="M735,548 C735,691.0 1130,691.0 1130,834" fill="none" stroke="#C0622A" stroke-opacity="0.33" stroke-width="1.3" stroke-dasharray="3 4"/>
+<path d="M495,548 C495,691.0 1285,691.0 1285,834" fill="none" stroke="#B072C8" stroke-opacity="0.375" stroke-width="1.3" stroke-dasharray="3 4"/>
+<path d="M1350,525 C1350,679.5 380,679.5 380,834" fill="none" stroke="#C8943A" stroke-opacity="0.5249999999999999" stroke-width="1.3"/>
+<path d="M1350,525 C1350,679.5 160,679.5 160,834" fill="none" stroke="#C8943A" stroke-opacity="0.375" stroke-width="1.3"/>
+<path d="M305,548 C305,691.0 160,691.0 160,834" fill="none" stroke="#6B7BD6" stroke-opacity="0.44999999999999996" stroke-width="1.3"/>
+<path d="M800,379 C800,606.5 600,606.5 600,834" fill="none" stroke="#C8943A" stroke-opacity="0.375" stroke-width="1.3" stroke-dasharray="2 5"/>
+<path d="M160,886 C160,886.05 1440,886.05 1440,886.1" fill="none" stroke="#F5F0E8" stroke-opacity="0.0" stroke-width="1.3"/>
+<text x="60" y="58" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="26" font-weight="700" fill="#F5F0E8">How ml-brainclone fits together</text>
+<text x="60" y="80" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="2" fill="#C0622A">REFERENCE INSTALL · NOVEMBER 2026</text>
+<circle cx="800" cy="62" r="34" fill="#C0622A" fill-opacity="0.12"/>
+<circle cx="800" cy="62" r="24" fill="#C0622A"/>
+<text x="800" y="69" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="19" fill="#F5F0E8">O</text>
+<text x="836" y="60" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-style="italic" font-size="20" fill="#C0622A">The owner</text>
+<text x="836" y="78" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">decides, always</text>
+<rect x="160" y="140" width="1280" height="128" rx="14" fill="#14294A" fill-opacity="0.66" stroke="#C0622A" stroke-opacity="0.28"/>
+<text x="178" y="164" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="2.5" fill="#C0622A" fill-opacity="0.9">WAYS IN</text>
+<text x="1422" y="164" text-anchor="end" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" font-style="italic" fill="#F5F0E8" fill-opacity="0.42">where the owner reaches the system</text>
+<circle cx="320" cy="205" r="28" fill="#C9BFAE" fill-opacity="0.10"/>
+<circle cx="320" cy="205" r="22" fill="#0F2038" stroke="#C9BFAE" stroke-width="2"/>
+<text x="320" y="209.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#C9BFAE">&gt;_</text>
+<text x="320" y="249" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Terminal</text>
+<text x="320" y="267" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">Claude Code + Remote Control</text>
+<circle cx="560" cy="205" r="28" fill="#C9BFAE" fill-opacity="0.10"/>
+<circle cx="560" cy="205" r="22" fill="#0F2038" stroke="#C9BFAE" stroke-width="2"/>
+<text x="560" y="209.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#C9BFAE">tg</text>
+<text x="560" y="249" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Telegram</text>
+<text x="560" y="267" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">Bot-listener</text>
+<circle cx="800" cy="205" r="28" fill="#C9BFAE" fill-opacity="0.10"/>
+<circle cx="800" cy="205" r="22" fill="#0F2038" stroke="#C9BFAE" stroke-width="2"/>
+<text x="800" y="209.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#C9BFAE">lw</text>
+<text x="800" y="249" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">The web</text>
+<text x="800" y="267" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">control room + pocket app</text>
+<circle cx="1040" cy="205" r="28" fill="#C9BFAE" fill-opacity="0.10"/>
+<circle cx="1040" cy="205" r="22" fill="#0F2038" stroke="#C9BFAE" stroke-width="2"/>
+<text x="1040" y="209.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#C9BFAE">hw</text>
+<text x="1040" y="249" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Voice</text>
+<text x="1040" y="267" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">Harry-wispr, local GPU</text>
+<circle cx="1280" cy="205" r="28" fill="#C9BFAE" fill-opacity="0.10"/>
+<circle cx="1280" cy="205" r="22" fill="#0F2038" stroke="#C9BFAE" stroke-width="2"/>
+<text x="1280" y="209.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#C9BFAE">sc</text>
+<text x="1280" y="249" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Screen</text>
+<text x="1280" y="267" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">Screen-bus</text>
+<rect x="40" y="323" width="1520" height="44" fill="url(#band)"/>
+<line x1="40" y1="345" x2="1560" y2="345" stroke="#C8943A" stroke-opacity="0.35" stroke-dasharray="1 9"/>
+<text x="60" y="315" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="2.5" fill="#C8943A">THE BUS AND THE GUARD</text>
+<text x="60" y="383" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" font-style="italic" fill="#F5F0E8" fill-opacity="0.45">SQLite WAL, every message passes Parry</text>
+<text x="1540" y="315" text-anchor="end" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="1" fill="#F5F0E8" fill-opacity="0.55">OVERSIGHT</text>
+<text x="1540" y="383" text-anchor="end" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.55">in the loop · on the loop · autonomous</text>
+<circle cx="800" cy="345" r="58" fill="url(#parry)"/>
+<circle cx="800" cy="345" r="30" fill="#F5F0E8" stroke="#ffffff" stroke-width="3"/>
+<text x="800" y="353" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="22" fill="#122540">P</text>
+<text x="844" y="343" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="16" fill="#F5F0E8">Parry</text>
+<text x="844" y="360" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">sees everything, flags</text>
+<rect x="60" y="420" width="590" height="160" rx="14" fill="#14294A" fill-opacity="0.66" stroke="#C0622A" stroke-opacity="0.28"/>
+<text x="78" y="444" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="2.5" fill="#C0622A" fill-opacity="0.9">THE BRAINS</text>
+<text x="632" y="444" text-anchor="end" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" font-style="italic" fill="#F5F0E8" fill-opacity="0.42">daemons made of capabilities</text>
+<circle cx="115" cy="488" r="28" fill="#C9A86A" fill-opacity="0.10"/>
+<circle cx="115" cy="488" r="22" fill="#0F2038" stroke="#C9A86A" stroke-width="2"/>
+<text x="115" y="495.2" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="20" fill="#C9A86A">T</text>
+<text x="115" y="532" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Tarry</text>
+<text x="115" y="550" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">time</text>
+<circle cx="210" cy="488" r="28" fill="#5AA9D6" fill-opacity="0.10"/>
+<circle cx="210" cy="488" r="22" fill="#0F2038" stroke="#5AA9D6" stroke-width="2"/>
+<text x="210" y="495.2" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="20" fill="#5AA9D6">C</text>
+<text x="210" y="532" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Carry</text>
+<text x="210" y="550" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">logistics</text>
+<circle cx="305" cy="488" r="28" fill="#6B7BD6" fill-opacity="0.10"/>
+<circle cx="305" cy="488" r="22" fill="#0F2038" stroke="#6B7BD6" stroke-width="2"/>
+<text x="305" y="495.2" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="20" fill="#6B7BD6">D</text>
+<text x="305" y="532" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Darry</text>
+<text x="305" y="550" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">the night</text>
+<circle cx="400" cy="488" r="28" fill="#9AA7C7" fill-opacity="0.10"/>
+<circle cx="400" cy="488" r="22" fill="#0F2038" stroke="#9AA7C7" stroke-width="2"/>
+<text x="400" y="495.2" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="20" fill="#9AA7C7">W</text>
+<text x="400" y="532" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Warry</text>
+<text x="400" y="550" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">mood</text>
+<circle cx="495" cy="488" r="28" fill="#B072C8" fill-opacity="0.10"/>
+<circle cx="495" cy="488" r="22" fill="#0F2038" stroke="#B072C8" stroke-width="2"/>
+<text x="495" y="495.2" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="20" fill="#B072C8">S</text>
+<text x="495" y="532" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Scarry</text>
+<text x="495" y="550" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">conscience</text>
+<circle cx="590" cy="488" r="28" fill="#A8C25A" fill-opacity="0.10"/>
+<circle cx="590" cy="488" r="22" fill="#0F2038" stroke="#A8C25A" stroke-width="2"/>
+<text x="590" y="495.2" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="20" fill="#A8C25A">F</text>
+<text x="590" y="532" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Farry</text>
+<text x="590" y="550" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">interpreter</text>
+<rect x="675" y="420" width="450" height="160" rx="14" fill="#14294A" fill-opacity="0.66" stroke="#C0622A" stroke-opacity="0.28"/>
+<text x="693" y="444" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="2.5" fill="#C0622A" fill-opacity="0.9">THE MODALITIES</text>
+<text x="1107" y="444" text-anchor="end" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" font-style="italic" fill="#F5F0E8" fill-opacity="0.42">task-watchers run the jobs</text>
+<circle cx="735" cy="488" r="28" fill="#C0622A" fill-opacity="0.10"/>
+<circle cx="735" cy="488" r="22" fill="#C0622A" stroke="#C0622A" stroke-width="2"/>
+<text x="735" y="495.2" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="20" fill="#122540">L</text>
+<text x="735" y="532" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Larry</text>
+<text x="735" y="550" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">conducts</text>
+<circle cx="845" cy="488" r="28" fill="#5FBF8F" fill-opacity="0.10"/>
+<circle cx="845" cy="488" r="22" fill="#0F2038" stroke="#5FBF8F" stroke-width="2"/>
+<text x="845" y="495.2" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="20" fill="#5FBF8F">B</text>
+<text x="845" y="532" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Barry</text>
+<text x="845" y="550" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">image</text>
+<circle cx="955" cy="488" r="28" fill="#E07A9A" fill-opacity="0.10"/>
+<circle cx="955" cy="488" r="22" fill="#0F2038" stroke="#E07A9A" stroke-width="2"/>
+<text x="955" y="495.2" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="20" fill="#E07A9A">H</text>
+<text x="955" y="532" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Harry</text>
+<text x="955" y="550" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">sound</text>
+<circle cx="1065" cy="488" r="28" fill="#9B7BE0" fill-opacity="0.10"/>
+<circle cx="1065" cy="488" r="22" fill="#0F2038" stroke="#9B7BE0" stroke-width="2"/>
+<text x="1065" y="495.2" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="20" fill="#9B7BE0">G</text>
+<text x="1065" y="532" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Garry</text>
+<text x="1065" y="550" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">3D</text>
+<rect x="1150" y="420" width="390" height="160" rx="14" fill="#14294A" fill-opacity="0.66" stroke="#C8943A" stroke-opacity="0.28"/>
+<text x="1168" y="444" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="2.5" fill="#C8943A" fill-opacity="0.9">THE MEMORY</text>
+<circle cx="1350" cy="485" r="70" fill="url(#milla)"/>
+<circle cx="1350" cy="485" r="32" fill="#0F2038" stroke="#C8943A" stroke-width="2.5"/>
+<text x="1350" y="494" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-weight="700" font-size="26" fill="#C8943A">M</text>
+<text x="1300" y="479" text-anchor="end" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="17" fill="#F5F0E8">Milla</text>
+<text x="1300" y="497" text-anchor="end" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">server + proxy</text>
+<text x="1400" y="479" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="13" fill="#C8943A">37,000+ memories</text>
+<text x="1400" y="497" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">knowledge graph · diary</text>
+<rect x="60" y="610" width="1480" height="100" rx="14" fill="#14294A" fill-opacity="0.66" stroke="#C0622A" stroke-opacity="0.28"/>
+<text x="78" y="634" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="2.5" fill="#C0622A" fill-opacity="0.9">SCHEDULED</text>
+<text x="1522" y="634" text-anchor="end" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" font-style="italic" fill="#F5F0E8" fill-opacity="0.42">Task Scheduler</text>
+<rect x="80" y="653" width="193" height="30" rx="15" fill="#0F2038" stroke="#F5F0E8" stroke-opacity="0.18"/>
+<circle cx="94" cy="668" r="3.5" fill="#C8943A"/>
+<text x="104" y="672.5" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="13" fill="#F5F0E8" fill-opacity="0.8">Night shift, 9 batches</text>
+<rect x="363.8" y="653" width="170" height="30" rx="15" fill="#0F2038" stroke="#F5F0E8" stroke-opacity="0.18"/>
+<circle cx="377.8" cy="668" r="3.5" fill="#C8943A"/>
+<text x="387.8" y="672.5" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="13" fill="#F5F0E8" fill-opacity="0.8">Morning brief 05:30</text>
+<rect x="624.8" y="653" width="110" height="30" rx="15" fill="#0F2038" stroke="#F5F0E8" stroke-opacity="0.18"/>
+<circle cx="638.8" cy="668" r="3.5" fill="#C8943A"/>
+<text x="648.8" y="672.5" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="13" fill="#F5F0E8" fill-opacity="0.8">Status file</text>
+<rect x="825.0" y="653" width="125" height="30" rx="15" fill="#0F2038" stroke="#F5F0E8" stroke-opacity="0.18"/>
+<circle cx="839.0" cy="668" r="3.5" fill="#C8943A"/>
+<text x="849.0" y="672.5" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="13" fill="#F5F0E8" fill-opacity="0.8">Evening close</text>
+<rect x="1040.4" y="653" width="87" height="30" rx="15" fill="#0F2038" stroke="#F5F0E8" stroke-opacity="0.18"/>
+<circle cx="1054.4" cy="668" r="3.5" fill="#C8943A"/>
+<text x="1064.4" y="672.5" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="13" fill="#F5F0E8" fill-opacity="0.8">NAS sync</text>
+<rect x="1217.8000000000002" y="653" width="125" height="30" rx="15" fill="#0F2038" stroke="#F5F0E8" stroke-opacity="0.18"/>
+<circle cx="1231.8000000000002" cy="668" r="3.5" fill="#C8943A"/>
+<text x="1241.8000000000002" y="672.5" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="13" fill="#F5F0E8" fill-opacity="0.8">Weekly upkeep</text>
+<rect x="1433.2000000000003" y="653" width="87" height="30" rx="15" fill="#0F2038" stroke="#F5F0E8" stroke-opacity="0.18"/>
+<circle cx="1447.2000000000003" cy="668" r="3.5" fill="#C8943A"/>
+<text x="1457.2000000000003" y="672.5" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="13" fill="#F5F0E8" fill-opacity="0.8">Watchdog</text>
+<rect x="60" y="750" width="640" height="170" rx="14" fill="#14294A" fill-opacity="0.66" stroke="#C0622A" stroke-opacity="0.28"/>
+<text x="78" y="774" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="2.5" fill="#C0622A" fill-opacity="0.9">STORAGE</text>
+<circle cx="160" cy="840" r="28" fill="#7FA7B8" fill-opacity="0.10"/>
+<circle cx="160" cy="840" r="22" fill="#0F2038" stroke="#7FA7B8" stroke-width="2"/>
+<text x="160" y="844.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#7FA7B8">vt</text>
+<text x="160" y="884" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">The vault</text>
+<text x="160" y="902" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">3,900+ notes</text>
+<circle cx="380" cy="840" r="28" fill="#7FA7B8" fill-opacity="0.10"/>
+<circle cx="380" cy="840" r="22" fill="#0F2038" stroke="#7FA7B8" stroke-width="2"/>
+<text x="380" y="844.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#7FA7B8">pa</text>
+<text x="380" y="884" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">The palace</text>
+<text x="380" y="902" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">ChromaDB · e5-large</text>
+<circle cx="600" cy="840" r="28" fill="#7FA7B8" fill-opacity="0.10"/>
+<circle cx="600" cy="840" r="22" fill="#0F2038" stroke="#7FA7B8" stroke-width="2"/>
+<text x="600" y="844.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#7FA7B8">db</text>
+<text x="600" y="884" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">The bus</text>
+<text x="600" y="902" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">SQLite WAL</text>
+<rect x="720" y="750" width="820" height="170" rx="14" fill="#14294A" fill-opacity="0.66" stroke="#C0622A" stroke-opacity="0.28"/>
+<text x="738" y="774" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="2.5" fill="#C0622A" fill-opacity="0.9">OUTSIDE THE MACHINE</text>
+<text x="1522" y="774" text-anchor="end" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" font-style="italic" fill="#F5F0E8" fill-opacity="0.42">the gateway: secret scan and privacy before every call</text>
+<circle cx="820" cy="840" r="28" fill="#C9A0DC" fill-opacity="0.10"/>
+<circle cx="820" cy="840" r="22" fill="#0F2038" stroke="#C9A0DC" stroke-width="2"/>
+<text x="820" y="844.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#C9A0DC">cl</text>
+<text x="820" y="884" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Claude</text>
+<text x="820" y="902" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">Opus 5.5 · Sonnet 5.5</text>
+<circle cx="975" cy="840" r="28" fill="#9FC6B5" fill-opacity="0.10"/>
+<circle cx="975" cy="840" r="22" fill="#0F2038" stroke="#9FC6B5" stroke-width="2"/>
+<text x="975" y="844.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#9FC6B5">gp</text>
+<text x="975" y="884" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">GPT</text>
+<text x="975" y="902" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">6.1 Sol via Codex</text>
+<circle cx="1130" cy="840" r="28" fill="#8FB2E8" fill-opacity="0.10"/>
+<circle cx="1130" cy="840" r="22" fill="#0F2038" stroke="#8FB2E8" stroke-width="2"/>
+<text x="1130" y="844.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#8FB2E8">ge</text>
+<text x="1130" y="884" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Gemini</text>
+<text x="1130" y="902" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">4 Argon via Vertex</text>
+<circle cx="1285" cy="840" r="28" fill="#B072C8" fill-opacity="0.10"/>
+<circle cx="1285" cy="840" r="22" fill="#0F2038" stroke="#B072C8" stroke-width="2"/>
+<text x="1285" y="844.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#B072C8">jv</text>
+<text x="1285" y="884" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">Jev</text>
+<text x="1285" y="902" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">System One, decisions</text>
+<circle cx="1440" cy="840" r="28" fill="#C9A0DC" fill-opacity="0.10"/>
+<circle cx="1440" cy="840" r="22" fill="#0F2038" stroke="#C9A0DC" stroke-width="2"/>
+<text x="1440" y="844.68" text-anchor="middle" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-weight="700" font-size="13" fill="#C9A0DC">ns</text>
+<text x="1440" y="884" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="600" font-size="15" fill="#F5F0E8">NAS</text>
+<text x="1440" y="902" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="11.5" fill="#F5F0E8" fill-opacity="0.5">backup every night</text>
+<text x="60" y="966" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="12.5" font-style="italic" fill="#F5F0E8" fill-opacity="0.45">Claude is the only writing authority. The rest answer questions.</text>
+<text x="1540" y="966" text-anchor="end" font-family="'JetBrains Mono', Consolas, 'Courier New', monospace" font-size="11" letter-spacing="2" fill="#F5F0E8" fill-opacity="0.35">GITHUB.COM/AMBIVRT/ML-BRAINCLONE</text>
+</svg>

@@ -47,8 +47,8 @@ privacy: 1
 
 | Date | Activity | Channel | Pillar | Owner | Status |
 |------|----------|---------|--------|-------|--------|
-| Mon 28 | Story-first intro post | LinkedIn | Story | Marcus | draft |
-| Tue 29 | Curated playlist created | Spotify | Community | Marcus | pending |
+| Mon 28 | Story-first intro post | LinkedIn | Story | Owner | draft |
+| Tue 29 | Curated playlist created | Spotify | Community | Owner | pending |
 | Fri 2 | Weekly metrics report | Internal | Data | Larry | pending |
 
 ## Week 2 (May 5 – May 11)

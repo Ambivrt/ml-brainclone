@@ -125,6 +125,31 @@ Test the resolver, not the model names, with two exceptions worth pinning:
 - Escalation returns a model at least as capable as the default, if your
   system depends on that ordering.
 
+## Three intents are enough
+
+The reference install runs on three intents and a fallback:
+
+| Intent | Used for | Effort |
+|--------|----------|--------|
+| `default` | sessions, orchestration, everything the owner reads | medium, high when medium gets stuck |
+| `routine` | unattended jobs like the task watcher | medium |
+| `simple` | bulk: subagents, translation, graders, graph extraction, vault hygiene | low on a cheaper model |
+| `cli_fallback` | only when the default model does not answer | |
+
+Medium as the baseline was a deliberate step down from high. Higher effort
+wrote longer, not better, for anything a person reads. The top levels stay
+in the call, for the hard architecture decision or the bug high did not crack,
+never as a habit.
+
+## Shadow candidates
+
+A cheaper model can run next to the bulk tier on the same inputs without
+deciding anything: same grader prompts, same extraction jobs, results written
+to a shadow log. A weekly report compares the two. The candidate is promoted
+by a human reading that report, never by the system itself. Keep the
+candidate in its own config key (`shadow_candidate`) so no call site can pick
+it by accident.
+
 ## A separate tier for gates and classification
 
 Not every decision needs a text model. A typed decision model, one that takes

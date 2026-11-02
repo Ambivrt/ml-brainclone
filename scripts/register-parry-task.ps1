@@ -1,5 +1,11 @@
-# Registers the LarryParryGuardian scheduled task.
+# Registers the LarryParryGuardian scheduled task: starts Parry (the bus
+# gatekeeper) alone.
 # Run once (as your normal user, not admin).
+#
+# To bring up the WHOLE stack after a reboot instead, use register-stack-task.ps1
+# (elevated): a logon task that runs stack-boot.ps1, plus an optional web-only task
+# (-Web) that keeps the web app and its tunnel up. Use this script only if you want
+# Parry on its own.
 #
 # Before running: replace {{VAULT_PATH}} in parry-scheduled-task.xml
 # with your actual vault path.

@@ -40,6 +40,12 @@ Claude Code (harness, writing authority)
 5. **Honest provenance.** Unknown token usage is `null`, never a fake zero. Subscription-based runs report `cost_basis: subscription` with `estimated_cost_usd: null`, not `$0.00`.
 6. **Findings are classified by the harness or the human** (true positive / false positive / needs context), never by the reviewer model itself.
 
+## In practice, months later
+
+- The provider defaults move. Model IDs live only in the routing policy (`openai/default`, `google/default`), so moving the reference install to a newer GPT via Codex and a newer Gemini via Vertex was two lines of YAML each, with a verification call before the switch.
+- The other family became the standing adversary. Bigger plans and architecture decisions go to a review route on the other family before anything is built. It attacks the plan, it does not propose its own. The author model keeps finding fewer of its own mistakes than a stranger does.
+- A typed decision model sits next to it, not inside it, for the narrow cases where a probability is the answer. See [decision-gate.md](decision-gate.md).
+
 ## Usage pattern
 
 ```
